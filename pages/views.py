@@ -18,31 +18,54 @@ def home_view(request):
 
     # Generar gráfico de líneas de tiempo
     fig, ax = plt.subplots(figsize=(10, 6))
-    colors = {'Actos preparatorios': 'skyblue', 'Selección': 'orange', 'Etapa contractual': 'green'}
+    colors = {
+        'Requerimiento': 'skyblue',
+        'Indagación de Mercado': 'orange',
+        'Convocatoria': 'green',
+        'Firma de contrato': 'purple',
+        'Entrega del bien': 'red'
+    }
     
     # Fecha de referencia: inicio del año (como `date`)
     start_of_year = date(datetime.now().year, 1, 1)
     today_date = date.today()  # Fecha actual
 
+    # Definir las fases y las actividades correspondientes
+    phases = ['Requerimiento', 'Indagación de Mercado', 'Convocatoria', 'Firma de contrato', 'Entrega del bien']
+    activities = [
+        'Fecha de Requerimiento',
+        'Indagación Mercado',
+        'Fecha de Convocatoria',
+        'Firma Estimada de Contrato',
+        'Ingreso Estimado Almacén',
+        'Fecha Estimada de Conformidad'
+    ]
+
+    # Definir la longitud máxima para truncar los nombres de los procesos
+    max_label_length = len("AUDÍFONOS CON MICRÓFONO PARA LOS SEHO")
+
     for proceso in procesos:
         evento_proceso = eventos.filter(proceso=proceso).order_by('fecha')
         if evento_proceso.exists():
-            start_date = evento_proceso.first().fecha  # Fecha de inicio del primer evento del proceso
-            phases = ['Actos preparatorios', 'Selección', 'Etapa contractual']
-            phase_durations = []
             phase_start_dates = []
+            phase_durations = []
+
+            # Inicializar la fecha de inicio
+            start_date = evento_proceso.filter(actividad=activities[0]).first().fecha if evento_proceso.filter(actividad=activities[0]).exists() else start_of_year
 
             # Calcular las duraciones de las fases
             for i in range(len(phases)):
-                phase_event = evento_proceso.filter(actividad=phases[i]).first()
+                current_activity = activities[i]
+                next_activity = activities[i + 1] if i + 1 < len(activities) else None
                 
-                # Si existe el evento, calcula la fecha de inicio de la fase
+                phase_event = evento_proceso.filter(actividad=current_activity).first()
+                
                 if phase_event:
-                    phase_start = phase_event.fecha  # Usar la fecha directamente
+                    phase_start = phase_event.fecha
                     phase_start_dates.append(phase_start)
-                    
-                    if i < len(phases) - 1:
-                        next_phase_event = evento_proceso.filter(actividad=phases[i + 1]).first()
+
+                    if next_activity:
+                        next_phase_event = evento_proceso.filter(actividad=next_activity).first()
                         if next_phase_event:
                             phase_durations.append((next_phase_event.fecha - phase_event.fecha).days)
                         else:
@@ -50,24 +73,29 @@ def home_view(request):
                     else:
                         phase_durations.append(5)  # Duración por defecto para la última fase
                 else:
-                    # Si no existe el evento, asignar duración 0 y misma fecha de inicio que el anterior
                     phase_start_dates.append(phase_start_dates[-1] if phase_start_dates else start_of_year)
                     phase_durations.append(0)
 
-            # Filtrar las etapas conocidas para asignar colores
-            filtered_etapas = [etapa for etapa in phases if etapa in colors]
+            # Truncar el nombre del proceso y agregar el número
+            proceso_label = f"{proceso.numero} - {proceso.nombre[:max_label_length]}{'...' if len(proceso.nombre) > max_label_length else ''}"
 
             # Graficar las fases de tiempo solo con etapas conocidas
             ax.barh(
-                proceso.nombre, 
+                proceso_label, 
                 phase_durations, 
-                left=phase_start_dates, 
-                color=[colors.get(etapa, 'grey') for etapa in filtered_etapas]  # Usar 'grey' si no se encuentra la clave
+                left=mdates.date2num(phase_start_dates),  # Convertir fechas a números para matplotlib
+                color=[colors.get(phase, 'grey') for phase in phases]
             )
 
     # Configuración del eje x para mostrar fechas
     ax.xaxis.set_major_locator(mdates.MonthLocator())  # Ubicar una línea en cada mes
     ax.xaxis.set_major_formatter(mdates.DateFormatter('%d-%b'))  # Formato de fecha (día-mes)
+
+    # Reducir aún más el tamaño de la fuente de las etiquetas del eje y
+    ax.tick_params(axis='y', labelsize=7)
+
+    # Ajustar los márgenes para que haya más espacio para los nombres y la leyenda
+    plt.subplots_adjust(left=0.35, right=0.95, bottom=0.2)  # Ajustar el espacio izquierdo, derecho, y el inferior del gráfico
 
     # Agregar líneas verticales para cada mes
     for month in range(1, 13):
@@ -81,12 +109,14 @@ def home_view(request):
 
     ax.set_xlabel('Fecha')
     ax.set_title('Líneas de tiempo de procesos')
+    
+    # Agregar leyenda en la parte inferior
     ax.legend(
         handles=[plt.Line2D([0], [0], color=color, lw=4) for phase, color in colors.items()] + 
                [plt.Line2D([0], [0], color='red', lw=1.5)],  # Agregar línea de leyenda para la fecha actual
         labels=list(colors.keys()) + ['Fecha Actual'],
         loc='lower center',  # Colocar la leyenda en la parte inferior
-        bbox_to_anchor=(0.5, -0.2),  # Ajustar la posición de la leyenda
+        bbox_to_anchor=(0.5, -0.3),  # Ajustar la posición de la leyenda
         ncol=len(colors) + 1  # Mostrar todas las leyendas en una fila
     )
 

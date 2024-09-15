@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     # Local
     "accounts",
     "pages",
+    'django.contrib.humanize',  # Asegúrate de incluir esta línea
     'django_extensions',  # Agregar django-extensions aquí
 ]
 
