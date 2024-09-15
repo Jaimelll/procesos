@@ -4,13 +4,6 @@
 
 {% block content %}
   <div class="container mt-4">
-    <h2>Procesos</h2>
-    <ul>
-      {% for proceso in procesos %}
-        <li>{{ proceso.nombre }}: {{ proceso.descripcion }}</li>
-      {% endfor %}
-    </ul>
-
     <!-- Mostrar gráfico -->
     {% if graphic %}
       <div>
@@ -22,3 +15,4 @@
     {% endif %}
   </div>
 {% endblock %}
+
