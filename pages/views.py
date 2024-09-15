@@ -8,6 +8,99 @@ from django.views.generic import CreateView
 import matplotlib.pyplot as plt
 import io
 import base64
+from datetime import datetime, date, timedelta
+import matplotlib.dates as mdates
+
+@login_required
+def home_view(request):
+    procesos = Proceso.objects.all()
+    eventos = Evento.objects.all().order_by('fecha')
+
+    # Generar gráfico de líneas de tiempo
+    fig, ax = plt.subplots(figsize=(10, 6))
+    colors = {'Actos preparatorios': 'skyblue', 'Selección': 'orange', 'Etapa contractual': 'green'}
+    
+    # Fecha de referencia: inicio del año (como `date`)
+    start_of_year = date(datetime.now().year, 1, 1)
+    today_date = date.today()  # Fecha actual
+
+    for proceso in procesos:
+        evento_proceso = eventos.filter(proceso=proceso).order_by('fecha')
+        if evento_proceso.exists():
+            start_date = evento_proceso.first().fecha  # Fecha de inicio del primer evento del proceso
+            phases = ['Actos preparatorios', 'Selección', 'Etapa contractual']
+            phase_durations = []
+            phase_start_dates = []
+
+            # Calcular las duraciones de las fases
+            for i in range(len(phases)):
+                phase_event = evento_proceso.filter(actividad=phases[i]).first()
+                
+                # Si existe el evento, calcula la fecha de inicio de la fase
+                if phase_event:
+                    phase_start = phase_event.fecha  # Usar la fecha directamente
+                    phase_start_dates.append(phase_start)
+                    
+                    if i < len(phases) - 1:
+                        next_phase_event = evento_proceso.filter(actividad=phases[i + 1]).first()
+                        if next_phase_event:
+                            phase_durations.append((next_phase_event.fecha - phase_event.fecha).days)
+                        else:
+                            phase_durations.append(5)  # Duración por defecto si no existe la siguiente fase
+                    else:
+                        phase_durations.append(5)  # Duración por defecto para la última fase
+                else:
+                    # Si no existe el evento, asignar duración 0 y misma fecha de inicio que el anterior
+                    phase_start_dates.append(phase_start_dates[-1] if phase_start_dates else start_of_year)
+                    phase_durations.append(0)
+
+            # Filtrar las etapas conocidas para asignar colores
+            filtered_etapas = [etapa for etapa in phases if etapa in colors]
+
+            # Graficar las fases de tiempo solo con etapas conocidas
+            ax.barh(
+                proceso.nombre, 
+                phase_durations, 
+                left=phase_start_dates, 
+                color=[colors.get(etapa, 'grey') for etapa in filtered_etapas]  # Usar 'grey' si no se encuentra la clave
+            )
+
+    # Configuración del eje x para mostrar fechas
+    ax.xaxis.set_major_locator(mdates.MonthLocator())  # Ubicar una línea en cada mes
+    ax.xaxis.set_major_formatter(mdates.DateFormatter('%d-%b'))  # Formato de fecha (día-mes)
+
+    # Agregar líneas verticales para cada mes
+    for month in range(1, 13):
+        ax.axvline(x=date(datetime.now().year, month, 1), color='grey', linestyle='--', linewidth=0.5)
+
+    # Línea vertical para la fecha actual
+    ax.axvline(x=today_date, color='red', linestyle='-', linewidth=1.5, label='Fecha Actual')
+
+    # Rotar las etiquetas de fechas para mayor legibilidad
+    plt.xticks(rotation=45)
+
+    ax.set_xlabel('Fecha')
+    ax.set_title('Líneas de tiempo de procesos')
+    ax.legend(
+        handles=[plt.Line2D([0], [0], color=color, lw=4) for phase, color in colors.items()] + 
+               [plt.Line2D([0], [0], color='red', lw=1.5)],  # Agregar línea de leyenda para la fecha actual
+        labels=list(colors.keys()) + ['Fecha Actual'],
+        loc='lower center',  # Colocar la leyenda en la parte inferior
+        bbox_to_anchor=(0.5, -0.2),  # Ajustar la posición de la leyenda
+        ncol=len(colors) + 1  # Mostrar todas las leyendas en una fila
+    )
+
+    # Guardar gráfico en un buffer
+    buffer = io.BytesIO()
+    plt.savefig(buffer, format='png')
+    buffer.seek(0)
+    image_png = buffer.getvalue()
+    buffer.close()
+    graphic = base64.b64encode(image_png).decode('utf-8')
+
+    context = {'graphic': graphic}
+    return render(request, 'home.html', context)
+
 
 @login_required
 def proceso_list(request):
@@ -70,76 +163,6 @@ class SignUpView(CreateView):
     form_class = CustomUserCreationForm
     success_url = reverse_lazy('login')
     template_name = 'registration/signup.html'
-
-@login_required
-def home_view(request):
-    procesos = Proceso.objects.all()
-    eventos = Evento.objects.all().order_by('fecha')
-
-    # Generar gráfico de líneas de tiempo
-    fig, ax = plt.subplots(figsize=(10, 6))
-    colors = {'Actos preparatorios': 'skyblue', 'Selección': 'orange', 'Etapa contractual': 'green'}
-    
-    for proceso in procesos:
-        evento_proceso = eventos.filter(proceso=proceso).order_by('fecha')
-        if evento_proceso.exists():
-            start_date = evento_proceso.first().fecha  # Fecha de inicio del primer evento
-            phases = ['Actos preparatorios', 'Selección', 'Etapa contractual']
-            phase_durations = []
-            phase_start_dates = []
-
-            # Calcular las duraciones de las fases
-            for i in range(len(phases)):
-                phase_start = evento_proceso.filter(actividad=phases[i]).first()
-                if phase_start:
-                    phase_start = phase_start.fecha
-                    phase_start_dates.append((phase_start - start_date).days)
-                    if i < len(phases) - 1:
-                        next_phase_start = evento_proceso.filter(actividad=phases[i + 1]).first()
-                        if next_phase_start:
-                            next_phase_start = next_phase_start.fecha
-                            phase_durations.append((next_phase_start - phase_start).days)
-                        else:
-                            phase_durations.append(0)  # Duración por defecto si no hay siguiente fase
-                    else:
-                        phase_durations.append(5)  # Duración por defecto para la última fase
-                else:
-                    phase_start_dates.append(0)
-                    phase_durations.append(0)
-
-            # Graficar las fases de tiempo solo con etapas conocidas
-            ax.barh(
-                proceso.nombre, 
-                phase_durations, 
-                left=phase_start_dates, 
-                color=[colors.get(etapa, 'grey') for etapa in phases]  # Usar 'grey' si no se encuentra la clave
-            )
-
-    ax.set_xlabel('Días desde el inicio')
-   # ax.set_title('Líneas de tiempo de procesos')
-
-    # Mover la leyenda debajo del gráfico, debajo del eje X
-    ax.legend(
-        handles=[plt.Line2D([0], [0], color=color, lw=4) for phase, color in colors.items()],
-        labels=colors.keys(),
-        loc='upper center',
-        bbox_to_anchor=(0.5, -0.15),  # Ajustar la posición debajo del eje X
-        fancybox=True,
-        shadow=True,
-        ncol=3
-    )
-
-    # Guardar gráfico en un buffer
-    buffer = io.BytesIO()
-    plt.savefig(buffer, format='png', bbox_inches='tight')  # Ajustar el gráfico para incluir la leyenda
-    buffer.seek(0)
-    image_png = buffer.getvalue()
-    buffer.close()
-    graphic = base64.b64encode(image_png).decode('utf-8')
-
-    context = {'graphic': graphic}
-    return render(request, 'home.html', context)
-
 
 
 
