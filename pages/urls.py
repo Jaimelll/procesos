@@ -1,6 +1,6 @@
 from django.urls import path
 from django.contrib.auth.views import LogoutView
-from .views import home_view, SignUpView, proceso_list, proceso_detail, proceso_create, proceso_update, proceso_delete, evento_list, evento_detail, evento_create, evento_update, evento_delete
+from .views import home_view, SignUpView, proceso_list, proceso_detail, proceso_create, proceso_update, proceso_delete, evento_list, evento_detail, evento_create, evento_update, evento_delete, about_view  # Importar 'about_view'
 
 urlpatterns = [
     path('', home_view, name='home'),
@@ -18,4 +18,5 @@ urlpatterns = [
     path('procesos/<int:proceso_id>/eventos/new/', evento_create, name='evento_create'),
     path('procesos/<int:proceso_id>/eventos/<int:pk>/edit/', evento_update, name='evento_update'),
     path('procesos/<int:proceso_id>/eventos/<int:pk>/delete/', evento_delete, name='evento_delete'),
+    path('about/', about_view, name='about'),
 ]

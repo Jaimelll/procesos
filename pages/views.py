@@ -244,3 +244,7 @@ def evento_delete(request, proceso_id, pk):
         evento.delete()
         return redirect('evento_list', proceso_id=proceso.id)
     return render(request, 'pages/evento_confirm_delete.html', {'evento': evento, 'proceso': proceso})
+
+def about_view(request):
+    """Vista para la página 'About'."""
+    return render(request, 'about.html')
