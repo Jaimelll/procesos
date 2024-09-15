@@ -6,7 +6,12 @@ from django.contrib.auth.models import User
 class ProcesoForm(forms.ModelForm):
     class Meta:
         model = Proceso
-        fields = ['numero', 'nombre', 'descripcion']
+        # Asegúrate de incluir todos los campos del modelo Proceso
+        fields = [
+            'numero', 'nombre', 'descripcion', 'previsto', 'estimado', 'estado', 'fecha_inicio',
+            'especialista_uare', 'acotaciones_adicionales', 'direccion', 'grupo', 'obtencion',
+            'cant_items', 'cant_unidades'
+        ]
 
 class EventoForm(forms.ModelForm):
     class Meta:

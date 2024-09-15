@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load humanize %} <!-- Asegúrate de cargar la biblioteca humanize -->
 
 {% block title %}
     Detalles del Proceso
@@ -24,7 +25,55 @@
             <th>Descripción</th>
             <td>{{ proceso.descripcion }}</td>
         </tr>
+        <tr>
+            <th>Previsto</th>
+            <td>{{ proceso.previsto|floatformat:2|intcomma }}</td>
+        </tr>
+        <tr>
+            <th>Estimado</th>
+            <td>{{ proceso.estimado|floatformat:2|intcomma }}</td>
+        </tr>
+        <tr>
+            <th>Estado</th>
+            <td>{{ proceso.estado }}</td>
+        </tr>
+        <tr>
+            <th>Fecha de Inicio</th>
+            <td>{{ proceso.fecha_inicio }}</td>
+        </tr>
+        <tr>
+            <th>Especialista UARE</th>
+            <td>{{ proceso.especialista_uare }}</td>
+        </tr>
+        <tr>
+            <th>Acotaciones Adicionales</th>
+            <td>{{ proceso.acotaciones_adicionales }}</td>
+        </tr>
+        <tr>
+            <th>Dirección</th>
+            <td>{{ proceso.direccion }}</td>
+        </tr>
+        <tr>
+            <th>Grupo</th>
+            <td>{{ proceso.grupo }}</td>
+        </tr>
+        <tr>
+            <th>Obtención</th>
+            <td>{{ proceso.obtencion }}</td>
+        </tr>
+        <tr>
+            <th>Cantidad de Ítems</th>
+            <td>{{ proceso.cant_items }}</td>
+        </tr>
+        <tr>
+            <th>Cantidad de Unidades</th>
+            <td>{{ proceso.cant_unidades }}</td>
+        </tr>
     </table>
+    <!-- Botones de acciones -->
     <a href="{% url 'proceso_list' %}" class="btn btn-secondary mt-3">Volver a la lista de procesos</a>
+    <a href="{% url 'proceso_update' proceso.pk %}" class="btn btn-warning mt-3">Editar Proceso</a>
+    <!-- Botón para crear un nuevo proceso -->
+    <a href="{% url 'proceso_create' %}" class="btn btn-success mt-3">Crear Nuevo Proceso</a>
 </div>
 {% endblock %}

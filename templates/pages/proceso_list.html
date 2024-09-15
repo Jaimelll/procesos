@@ -1,15 +1,18 @@
-<!-- templates/pages/proceso_list.html -->
 {% extends 'base.html' %}
+{% load humanize %}  <!-- Asegúrate de cargar humanize aquí si lo necesitas -->
+
 {% block content %}
 <div class="row">
     <div class="col-md-8">
         <h2>Lista de Procesos</h2>
+        <!-- Botón para crear un nuevo proceso -->
+        <a href="{% url 'proceso_create' %}" class="btn btn-success mb-3">Crear Nuevo Proceso</a>
         <table class="table table-striped">
             <thead>
                 <tr>
                     <th>Número</th>
                     <th>Nombre</th>
-                    <th>Descripción</th>
+                    <th>Previsto</th>
                     <th>Acciones</th>
                 </tr>
             </thead>
@@ -23,7 +26,7 @@
                             {{ proceso.nombre }}
                         </a>
                     </td>
-                    <td>{{ proceso.descripcion }}</td>
+                    <td>{{ proceso.previsto|floatformat:2|intcomma }}</td>
                     <td>
                         <a href="{% url 'proceso_detail' proceso.pk %}" class="btn btn-info btn-sm">Ver</a>
                         <a href="{% url 'proceso_update' proceso.pk %}" class="btn btn-warning btn-sm">Editar</a>

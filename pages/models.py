@@ -2,8 +2,19 @@ from django.db import models
 
 class Proceso(models.Model):
     numero = models.IntegerField(unique=True)  # Corresponde a la columna 'Nº' en el Excel
-    nombre = models.CharField(max_length=100)  # Otro campo de ejemplo
-    descripcion = models.TextField()  # Campo de descripción
+    nombre = models.CharField(max_length=100, blank=True, null=True)  # Otro campo de ejemplo
+    descripcion = models.TextField(blank=True, null=True)  # Campo de descripción
+    direccion = models.CharField(max_length=50, blank=True, null=True)  # Nuevo campo 'direccion'
+    grupo = models.CharField(max_length=100, blank=True, null=True)  # Nuevo campo 'grupo'
+    obtencion = models.CharField(max_length=100, blank=True, null=True)  # Nuevo campo 'obtencion'
+    cant_items = models.IntegerField(null=True, blank=True)  # Nuevo campo 'cant_items'
+    cant_unidades = models.IntegerField(null=True, blank=True)  # Nuevo campo 'cant_unidades'
+    previsto = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)  # Nuevo campo 'previsto'
+    estimado = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)  # Nuevo campo 'estimado'
+    estado = models.CharField(max_length=100, blank=True, null=True)  # Nuevo campo 'estado'
+    fecha_inicio = models.DateField(null=True, blank=True)  # Nuevo campo 'fecha_inicio'
+    especialista_uare = models.CharField(max_length=100, blank=True, null=True)  # Nuevo campo 'especialista_uare'
+    acotaciones_adicionales = models.TextField(blank=True, null=True)  # Nuevo campo 'acotaciones_adicionales'
     creado_en = models.DateTimeField(auto_now_add=True)  # Fecha de creación automática
 
     def __str__(self):
