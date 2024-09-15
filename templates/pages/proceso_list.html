@@ -2,49 +2,58 @@
 {% load humanize %}  <!-- Asegúrate de cargar humanize aquí si lo necesitas -->
 
 {% block content %}
-<div class="row">
-    <div class="col-md-8">
-        <h2>Lista de Procesos</h2>
-        <!-- Botón para crear un nuevo proceso -->
-        <a href="{% url 'proceso_create' %}" class="btn btn-success mb-3">Crear Nuevo Proceso</a>
-        <table class="table table-striped">
-            <thead>
-                <tr>
-                    <th>Número</th>
-                    <th>Nombre</th>
-                    <th>Previsto</th>
-                    <th>Acciones</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for proceso in procesos %}
-                <tr>
-                    <td>{{ proceso.numero }}</td>
-                    <!-- Aquí hacemos que el nombre del proceso sea un enlace a la lista de eventos -->
-                    <td>
-                        <a href="{% url 'evento_list' proceso_id=proceso.id %}">
-                            {{ proceso.nombre }}
-                        </a>
-                    </td>
-                    <td>{{ proceso.previsto|floatformat:2|intcomma }}</td>
-                    <td>
-                        <a href="{% url 'proceso_detail' proceso.pk %}" class="btn btn-info btn-sm">Ver</a>
-                        <a href="{% url 'proceso_update' proceso.pk %}" class="btn btn-warning btn-sm">Editar</a>
-                        <a href="{% url 'proceso_delete' proceso.pk %}" class="btn btn-danger btn-sm">Eliminar</a>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
+<div class="container mt-5"> <!-- Cambiar a container para agregar márgenes laterales en pantallas grandes, mt-5 para margen superior -->
+    <div class="row">
+        <!-- Lista de Procesos -->
+        <div class="col-12 col-lg-8 mb-4"> <!-- Usar col-12 para pantallas pequeñas y col-lg-8 para grandes -->
+            <h2 class="mb-3">Lista de Procesos</h2>
+            <!-- Botón para crear un nuevo proceso -->
+            <a href="{% url 'proceso_create' %}" class="btn btn-success mb-3">Crear Nuevo Proceso</a>
+            <div class="table-responsive"> <!-- Hace la tabla responsiva -->
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Número</th>
+                            <th>Nombre</th>
+                            <th>Previsto</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for proceso in procesos %}
+                        <tr>
+                            <td>{{ proceso.numero }}</td>
+                            <!-- Aquí hacemos que el nombre del proceso sea un enlace a la lista de eventos -->
+                            <td>
+                                <a href="{% url 'evento_list' proceso_id=proceso.id %}">
+                                    {{ proceso.nombre }}
+                                </a>
+                            </td>
+                            <td>{{ proceso.previsto|floatformat:2|intcomma }}</td>
+                            <td>
+                                <a href="{% url 'proceso_detail' proceso.pk %}" class="btn btn-info btn-sm">Ver</a>
+                                <a href="{% url 'proceso_update' proceso.pk %}" class="btn btn-warning btn-sm">Editar</a>
+                                <a href="{% url 'proceso_delete' proceso.pk %}" class="btn btn-danger btn-sm">Eliminar</a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
 
-    <!-- Sidebar de Filtros -->
-    <div class="col-md-4">
-        <h4>Filtrar Procesos</h4>
-        <form method="get">
-            {{ form.as_p }}
-            <button type="submit" class="btn btn-primary">Filtrar</button>
-        </form>
+        <!-- Sidebar de Filtros -->
+        <div class="col-12 col-lg-4"> <!-- Usar col-12 para pantallas pequeñas y col-lg-4 para grandes -->
+            <div class="card mb-4"> <!-- Usar una tarjeta para mejorar la apariencia del filtro -->
+                <div class="card-body">
+                    <h4 class="card-title mb-3">Filtrar Procesos</h4>
+                    <form method="get">
+                        {{ form.as_p }}
+                        <button type="submit" class="btn btn-primary w-100">Filtrar</button> <!-- Botón de filtro más ancho -->
+                    </form>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 {% endblock %}

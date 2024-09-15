@@ -6,13 +6,12 @@
   <div class="container mt-4">
     <!-- Mostrar gráfico -->
     {% if graphic %}
-      <div>
-        <h3>Gráfico de Líneas de Tiempo de Procesos</h3>
-        <img src="data:image/png;base64,{{ graphic }}" alt="Gráfico de líneas de tiempo de procesos"/>
+      <div class="text-center"> <!-- Centrar el contenido para mejorar el diseño -->
+        <h3 class="mb-4">Gráfico de Líneas de Tiempo de Procesos</h3>
+        <img src="data:image/png;base64,{{ graphic }}" alt="Gráfico de líneas de tiempo de procesos" class="img-fluid"/> <!-- Hacer la imagen responsiva -->
       </div>
     {% else %}
       <p>No hay datos suficientes para mostrar el gráfico.</p>
     {% endif %}
   </div>
 {% endblock %}
-
