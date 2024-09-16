@@ -10,6 +10,7 @@ import io
 import base64
 from datetime import datetime, date, timedelta
 import matplotlib.dates as mdates
+from django.db.models import Count  # Importación agregada aquí
 
 @login_required
 def home_view(request):
@@ -17,7 +18,7 @@ def home_view(request):
     eventos = Evento.objects.all().order_by('fecha')
 
     # Generar gráfico de líneas de tiempo
-    fig, ax = plt.subplots(figsize=(10, 6))
+    fig, ax = plt.subplots(figsize=(12, 8))
     colors = {
         'Requerimiento': 'skyblue',
         'Indagación de Mercado': 'orange',
@@ -95,7 +96,7 @@ def home_view(request):
     ax.tick_params(axis='y', labelsize=7)
 
     # Ajustar los márgenes para que haya más espacio para los nombres y la leyenda
-    plt.subplots_adjust(left=0.35, right=0.95, bottom=0.2)  # Ajustar el espacio izquierdo, derecho, y el inferior del gráfico
+    plt.subplots_adjust(left=0.35, right=0.95, bottom=0.3)  # Ajustar el espacio izquierdo, derecho, y el inferior del gráfico
 
     # Agregar líneas verticales para cada mes
     for month in range(1, 13):
@@ -128,9 +129,27 @@ def home_view(request):
     buffer.close()
     graphic = base64.b64encode(image_png).decode('utf-8')
 
-    context = {'graphic': graphic}
-    return render(request, 'home.html', context)
+    # Generar gráfico de torta (pie chart) para procesos por dirección
+    fig2, ax2 = plt.subplots(figsize=(8, 6))
+    # Asumiendo que 'direccion' es un campo en tu modelo Proceso
+    procesos_por_direccion = procesos.values('direccion').annotate(total_procesos=Count('id'))
+    direcciones = [item['direccion'] for item in procesos_por_direccion]
+    cantidades = [item['total_procesos'] for item in procesos_por_direccion]
 
+    # Crear el gráfico de torta
+    ax2.pie(cantidades, labels=direcciones, autopct='%1.1f%%', startangle=140)
+    ax2.axis('equal')  # Para que el gráfico de torta sea circular
+
+    # Guardar gráfico de pie chart en un buffer
+    buffer2 = io.BytesIO()
+    plt.savefig(buffer2, format='png')
+    buffer2.seek(0)
+    image_png2 = buffer2.getvalue()
+    buffer2.close()
+    graphic2 = base64.b64encode(image_png2).decode('utf-8')
+
+    context = {'graphic': graphic, 'graphic2': graphic2}
+    return render(request, 'home.html', context)
 
 @login_required
 def proceso_list(request):
