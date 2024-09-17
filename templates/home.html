@@ -4,25 +4,29 @@
 
 {% block content %}
   <div class="container mt-4">
-    <!-- Formulario de Filtro de Dirección -->
-    <form method="get" class="mb-4"> <!-- Formulario al principio de la página -->
+    <!-- Formulario de Filtro de Dirección con Botones -->
+    <form method="get" class="mb-4">
       <div class="row">
-        <div class="col-md-4"> <!-- Campo de filtro de dirección -->
-          {{ filter_form.direccion.label_tag }} <!-- Mostrar la etiqueta del campo -->
-          {{ filter_form.direccion }} <!-- Mostrar el campo de selección de dirección -->
+        <div class="col-12">
+          <!-- Botones para cada dirección -->
+          {% for direccion in direcciones %}
+            <button type="submit" name="direccion" value="{{ direccion }}" class="btn {% if direccion == direccion_seleccionada %}btn-primary{% else %}btn-outline-primary{% endif %} mb-2">
+              {{ direccion }}
+            </button>
+          {% endfor %}
         </div>
       </div>
     </form>
 
     <!-- Bloque para Gráfico de Líneas de Tiempo -->
     <div class="row">
-      <div class="col-12 mb-4"> <!-- col-12 para que ocupe todo el ancho de la pantalla -->
-        <div class="card"> <!-- Usar card de Bootstrap para estilo -->
+      <div class="col-12 mb-4">
+        <div class="card">
           <div class="card-body">
             <h3 class="card-title text-center mb-4">Gráfico de Líneas de Tiempo de Procesos</h3>
             {% if graphic %}
-              <div class="text-center"> <!-- Centrar el contenido para mejorar el diseño -->
-                <img src="data:image/png;base64,{{ graphic }}" alt="Gráfico de líneas de tiempo de procesos" class="img-fluid"/> <!-- Hacer la imagen responsiva -->
+              <div class="text-center">
+                <img src="data:image/png;base64,{{ graphic }}" alt="Gráfico de líneas de tiempo de procesos" class="img-fluid"/>
               </div>
             {% else %}
               <p>No hay datos suficientes para mostrar el gráfico de Líneas de Tiempo.</p>
@@ -35,13 +39,13 @@
     <!-- Fila separada para otros gráficos -->
     <div class="row">
       <!-- Bloque para Gráfico de Procesos por Dirección -->
-      <div class="col-12 mb-4"> <!-- col-12 para que ocupe todo el ancho de la pantalla -->
-        <div class="card"> <!-- Usar card de Bootstrap para estilo -->
+      <div class="col-12 mb-4">
+        <div class="card">
           <div class="card-body">
             <h3 class="card-title text-center mb-4">Gráfico de Procesos por Dirección</h3>
             {% if graphic2 %}
-              <div class="text-center"> <!-- Centrar el contenido para mejorar el diseño -->
-                <img src="data:image/png;base64,{{ graphic2 }}" alt="Gráfico de Procesos por Dirección" class="img-fluid"/> <!-- Hacer la imagen responsiva -->
+              <div class="text-center">
+                <img src="data:image/png;base64,{{ graphic2 }}" alt="Gráfico de Procesos por Dirección" class="img-fluid"/>
               </div>
             {% else %}
               <p>No hay datos suficientes para mostrar el gráfico de Procesos por Dirección.</p>

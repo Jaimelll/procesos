@@ -10,12 +10,31 @@ import io
 import base64
 from datetime import datetime, date, timedelta
 import matplotlib.dates as mdates
-from django.db.models import Count  # Importación agregada aquí
+from django.db.models import Count, Sum
+import locale
+
+# Manejo del locale de manera segura
+try:
+    locale.setlocale(locale.LC_ALL, 'es_PE.UTF-8')  # Cambiado a 'es_PE'
+except locale.Error:
+    # Puedes manejar el error aquí si el locale no está disponible
+    pass
 
 @login_required
 def home_view(request):
-    procesos = Proceso.objects.all()
-    eventos = Evento.objects.all().order_by('fecha')
+    # Obtener todas las direcciones únicas
+    direcciones = Proceso.objects.values_list('direccion', flat=True).distinct()
+
+    # Filtrar procesos por dirección seleccionada
+    direccion_seleccionada = request.GET.get('direccion', None)
+    if direccion_seleccionada:
+        procesos = Proceso.objects.filter(direccion=direccion_seleccionada)
+    else:
+        # Seleccionar la dirección con más procesos por defecto
+        direccion_seleccionada = Proceso.objects.values('direccion').annotate(total=Count('id')).order_by('-total').first()['direccion']
+        procesos = Proceso.objects.filter(direccion=direccion_seleccionada)
+    
+    eventos = Evento.objects.filter(proceso__in=procesos).order_by('fecha')
 
     # Generar gráfico de líneas de tiempo
     fig, ax = plt.subplots(figsize=(12, 8))
@@ -26,7 +45,7 @@ def home_view(request):
         'Firma de contrato': 'purple',
         'Entrega del bien': 'red'
     }
-    
+
     # Fecha de referencia: inicio del año (como `date`)
     start_of_year = date(datetime.now().year, 1, 1)
     today_date = date.today()  # Fecha actual
@@ -132,12 +151,22 @@ def home_view(request):
     # Generar gráfico de torta (pie chart) para procesos por dirección
     fig2, ax2 = plt.subplots(figsize=(8, 6))
     # Asumiendo que 'direccion' es un campo en tu modelo Proceso
-    procesos_por_direccion = procesos.values('direccion').annotate(total_procesos=Count('id'))
+    procesos_por_direccion = Proceso.objects.values('direccion').annotate(total_procesos=Count('id'), total_previsto=Sum('previsto'))
     direcciones = [item['direccion'] for item in procesos_por_direccion]
     cantidades = [item['total_procesos'] for item in procesos_por_direccion]
 
+    # Formatear el total previsto de forma segura en soles peruanos
+    def format_currency(value):
+        try:
+            return f"{value:,.2f} PEN"  # Formato numérico con comas y dos decimales
+        except ValueError:
+            # Formato alternativo si el valor es inválido
+            return f"{value:,.2f} PEN"
+
+    etiquetas = [f"{item['direccion']}\nProcesos: {item['total_procesos']}\nMonto: {format_currency(item['total_previsto'])}" for item in procesos_por_direccion]
+
     # Crear el gráfico de torta
-    ax2.pie(cantidades, labels=direcciones, autopct='%1.1f%%', startangle=140)
+    ax2.pie(cantidades, labels=etiquetas, autopct='%1.1f%%', startangle=140)
     ax2.axis('equal')  # Para que el gráfico de torta sea circular
 
     # Guardar gráfico de pie chart en un buffer
@@ -148,8 +177,14 @@ def home_view(request):
     buffer2.close()
     graphic2 = base64.b64encode(image_png2).decode('utf-8')
 
-    context = {'graphic': graphic, 'graphic2': graphic2}
+    context = {
+        'graphic': graphic, 
+        'graphic2': graphic2,
+        'direcciones': direcciones, 
+        'direccion_seleccionada': direccion_seleccionada
+    }
     return render(request, 'home.html', context)
+
 
 @login_required
 def proceso_list(request):

@@ -129,10 +129,11 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/dev/topics/i18n/
 # https://docs.djangoproject.com/en/dev/ref/settings/#language-code
-LANGUAGE_CODE = "en-us"
+# Idioma: Español de Perú
+LANGUAGE_CODE = "es-pe"  # 'es' para Español y 'pe' para Perú
 
-# https://docs.djangoproject.com/en/dev/ref/settings/#time-zone
-TIME_ZONE = "UTC"
+# Zona horaria: Lima, Perú
+TIME_ZONE = "America/Lima"  # Zona horaria de Lima, Perú
 
 # https://docs.djangoproject.com/en/dev/ref/settings/#std:setting-USE_I18N
 USE_I18N = True
