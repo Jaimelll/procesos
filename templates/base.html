@@ -1,4 +1,3 @@
-<!-- templates/base.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -6,50 +5,136 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Mi Aplicación{% endblock %}</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0-beta1/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Añadir Bootstrap Icons -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        {% if user.is_authenticated %}
+        body {
+            margin-top: 56px; /* Altura del navbar */
+            overflow-x: hidden; /* Evitar desbordamiento horizontal en todas las páginas */
+        }
+        .sidebar {
+            position: fixed;
+            top: 56px; /* Debajo del navbar */
+            bottom: 0;
+            left: 0;
+            z-index: 100; /* Asegura que esté por encima del contenido principal */
+            width: 240px; /* Ancho del sidebar */
+            background-color: #343a40; /* Color de fondo del sidebar */
+            transition: transform 0.3s ease; /* Transición suave para ocultar/mostrar */
+        }
+        .sidebar .nav-link {
+            color: #ffffff; /* Color del texto del sidebar */
+            padding: 15px 20px; /* Espaciado interno */
+            display: flex; /* Flexbox para alineación */
+            align-items: center; /* Centrar verticalmente */
+            font-size: 16px; /* Tamaño de la fuente */
+        }
+        .sidebar .nav-link i {
+            margin-right: 10px; /* Espacio entre el ícono y el texto */
+            font-size: 20px; /* Tamaño del ícono */
+        }
+        .sidebar .nav-link:hover {
+            background-color: #495057; /* Color de fondo al pasar el ratón */
+        }
+        .sidebar .nav-link.active {
+            background-color: #062a50; /* Color de fondo del enlace activo */
+            color: #ffffff; /* Color del texto activo */
+        }
+        .content {
+            margin-left: 240px; /* Margen izquierdo para no superponerse con el sidebar */
+            padding: 20px;
+            max-width: calc(100% - 240px); /* Asegurar que el contenido no se desborde */
+            overflow-x: hidden; /* Evitar desbordamiento horizontal en contenido principal */
+            transition: margin-left 0.3s ease; /* Transición suave para ajustar el contenido */
+        }
+        @media (max-width: 992px) {
+            .sidebar {
+                transform: translateX(-100%); /* Ocultar sidebar por defecto en pantallas pequeñas */
+            }
+            .sidebar.show {
+                transform: translateX(0); /* Mostrar sidebar cuando está activado */
+            }
+            .content {
+                margin-left: 0; /* En pantallas pequeñas, quitar margen izquierdo */
+                max-width: 100%; /* Ancho completo */
+            }
+        }
+        .overflow-auto-container {
+            overflow-x: auto; /* Habilitar desplazamiento solo cuando sea necesario */
+            padding: 10px;
+        }
+        {% endif %}
+    </style>
 </head>
 <body>
+
     {% if user.is_authenticated %}
-    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+    <!-- Navbar fijo en la parte superior -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
         <div class="container-fluid">
-            <a class="navbar-brand" href="{% url 'home' %}">Seguimiento</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <!-- Botón de menú para pantallas pequeñas -->
+            <button class="navbar-toggler" type="button" onclick="toggleSidebar()">
                 <span class="navbar-toggler-icon"></span>
             </button>
+            <a class="navbar-brand" href="{% url 'home' %}">Seguimiento</a>
             <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'home' %}">Dashboard</a>
-                    </li>
-                    <!-- Menú Procesos -->
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'proceso_list' %}">Procesos</a>
-                    </li>
-                </ul>
-                <!-- Logout como ícono solo para pantallas grandes -->
-                <form method="POST" action="{% url 'logout' %}" class="d-none d-lg-flex ms-auto me-3"> <!-- ms-auto para alinear a la derecha, me-3 para margen derecho -->
-                    {% csrf_token %}
-                    <button type="submit" class="btn btn-link nav-link p-0" style="padding: 0;" title="Salir"> <!-- Añadir 'title' para el texto emergente -->
-                        <i class="bi bi-box-arrow-right fs-3"></i> <!-- Ícono de salida más grande (fs-3) -->
-                    </button>
-                </form>
-                <!-- Logout como texto normal solo para pantallas pequeñas y medianas -->
-                <form method="POST" action="{% url 'logout' %}" class="d-flex d-lg-none"> <!-- Mostrar solo en pantallas pequeñas -->
-                    {% csrf_token %}
-                    <button type="submit" class="btn btn-link nav-link p-0" style="padding: 0;">Logout</button>
-                </form>
+                <div class="d-flex w-100 justify-content-end">
+                    <ul class="navbar-nav">
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <!-- Imagen del usuario -->
+                                <img src="https://img.freepik.com/psd-gratis/3d-ilustracion-persona-gafas-sol_23-2149436188.jpg?size=338&ext=jpg&ga=GA1.1.2008272138.1724025600&semt=ais_hybrid" alt="Usuario" class="rounded-circle me-2" style="width: 30px; height: 30px;">
+                                {{ user.username }}
+                            </a>
+                            <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+                                <li>
+                                    <form method="POST" action="{% url 'logout' %}">
+                                        {% csrf_token %}
+                                        <button type="submit" class="dropdown-item">Salir</button>
+                                    </form>
+                                </li>
+                            </ul>
+                        </li>
+                    </ul>
+                </div>
             </div>
         </div>
     </nav>
+
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <ul class="nav flex-column">
+            {% url 'home' as home_url %}
+            {% url 'proceso_list' as proceso_list_url %}
+            <li class="nav-item">
+                <a class="nav-link {% if request.path == home_url %}active{% endif %}" href="{% url 'home' %}">
+                    <i class="bi bi-house-door-fill"></i> Dashboard
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {% if request.path == proceso_list_url %}active{% endif %}" href="{% url 'proceso_list' %}">
+                    <i class="bi bi-gear-fill"></i> Procesos
+                </a>
+            </li>
+        </ul>
+    </div>
+
     {% endif %}
-    
-    <!-- Cambiado a container-fluid para eliminar márgenes limitantes -->
-    <div class="container-fluid p-0">
+
+    <!-- Contenido Principal -->
+    <div class="container-fluid p-0 {% if user.is_authenticated %}content{% else %}container-fluid{% endif %}">
         {% block content %}
+        <!-- Aquí va el contenido de cada vista -->
         {% endblock %}
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0-beta1/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Función para mostrar/ocultar el sidebar
+        function toggleSidebar() {
+            const sidebar = document.querySelector('.sidebar');
+            sidebar.classList.toggle('show');
+        }
+    </script>
 </body>
 </html>
