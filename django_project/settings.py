@@ -18,7 +18,7 @@ DEBUG = True
 # https://docs.djangoproject.com/en/dev/ref/settings/#allowed-hosts
 ALLOWED_HOSTS = ['localhost', '127.0.0.1', '[::1]', '.ngrok-free.app', 'andres.syssoftintegra.com']  # Permite todos los subdominios de ngrok
 
-CSRF_TRUSTED_ORIGINS = ['https://*.ngrok-free.app']  # Agrega ngrok como origen confiable
+CSRF_TRUSTED_ORIGINS = ['https://*.ngrok-free.app','https://andres.syssoftintegra.com']  # Agrega ngrok como origen confiable
 
 
 
