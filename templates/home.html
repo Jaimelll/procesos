@@ -5,18 +5,24 @@
 {% block content %}
   <div class="container mt-4">
     <!-- Formulario de Filtro de Dirección con Botones -->
-    <form method="get" class="mb-4">
-      <div class="row">
-        <div class="col-12">
-          <!-- Botones para cada dirección -->
-          {% for direccion in direcciones %}
-            <button type="submit" name="direccion" value="{{ direccion }}" class="btn {% if direccion == direccion_seleccionada %}btn-primary{% else %}btn-outline-primary{% endif %} mb-2">
-              {{ direccion }}
-            </button>
-          {% endfor %}
-        </div>
+<!-- Formulario de Filtro de Dirección con Botones -->
+<form method="get" class="mb-4">
+  <div class="row">
+    <div class="col-12">
+      <!-- Contenedor flex para centrar los botones en una fila -->
+      <div class="d-flex flex-wrap justify-content-center"> <!-- Cambiado justify-content-start a justify-content-center -->
+        <!-- Botones para cada dirección -->
+        {% for direccion in direcciones %}
+          <button type="submit" name="direccion" value="{{ direccion }}" class="btn {% if direccion == direccion_seleccionada %}btn-primary{% else %}btn-outline-primary{% endif %} mb-2 me-2"> <!-- Añadido me-2 para margen derecho -->
+            {{ direccion }}
+          </button>
+        {% endfor %}
       </div>
-    </form>
+    </div>
+  </div>
+</form>
+
+
 
     <!-- Bloque para Gráfico de Líneas de Tiempo -->
     <div class="row">
