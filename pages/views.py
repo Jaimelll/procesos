@@ -89,7 +89,13 @@ def home_view(request):
                         if next_phase_event:
                             phase_durations.append((next_phase_event.fecha - phase_event.fecha).days)
                         else:
-                            phase_durations.append(5)  # Duración por defecto si no existe la siguiente fase
+                            # Buscar la próxima actividad disponible y extender la duración hasta esa
+                            next_available_event = evento_proceso.filter(actividad__in=activities[i+1:]).first()
+                            if next_available_event:
+                                phase_durations.append((next_available_event.fecha - phase_event.fecha).days)
+                            else:
+                                # Duración por defecto si no existe la siguiente fase disponible
+                                phase_durations.append(5)
                     else:
                         phase_durations.append(5)  # Duración por defecto para la última fase
                 else:
@@ -184,7 +190,6 @@ def home_view(request):
         'direccion_seleccionada': direccion_seleccionada
     }
     return render(request, 'home.html', context)
-
 
 @login_required
 def proceso_list(request):
