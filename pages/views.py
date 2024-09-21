@@ -49,7 +49,7 @@ def home_view(request):
         'Ingreso Estimado Almacén',
         'Fecha Estimada de Conformidad'
     ]
-    max_label_length = len("AUDÍFONOS CON MICRÓFONO PARA LOS SEHO")
+    max_label_length = len("AUDÍFONOS CON MICRÓFONO PARA LOS")
 
     # Generar el primer gráfico
     graphic = generate_graphic(procesos, eventos, colors, activities, max_label_length)

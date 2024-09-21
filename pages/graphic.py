@@ -5,7 +5,8 @@ import base64
 from datetime import datetime, date
 
 def generate_graphic(procesos, eventos, colors, activities, max_label_length):
-    fig, ax = plt.subplots(figsize=(12, 8))
+    # Tamaño del gráfico ajustado
+    fig, ax = plt.subplots(figsize=(32, 16))  # Ancho 32, altura 16
 
     start_of_year = date(datetime.now().year, 1, 1)
     today_date = date.today()
@@ -57,26 +58,35 @@ def generate_graphic(procesos, eventos, colors, activities, max_label_length):
 
     ax.xaxis.set_major_locator(mdates.MonthLocator())
     ax.xaxis.set_major_formatter(mdates.DateFormatter('%d-%b'))
-    ax.tick_params(axis='y', labelsize=7)
-    plt.subplots_adjust(left=0.35, right=0.95, bottom=0.3)
 
+    # Ajustar los márgenes para que las etiquetas del eje y sean visibles
+    ax.tick_params(axis='y', labelsize=30)  # Tamaño de la fuente (30)
+
+    # Ajustar el espaciado de los márgenes
+    plt.subplots_adjust(left=0.35, right=0.95, top=0.95, bottom=0.25)
+
+    # Mantener las líneas de referencia para los meses
     for month in range(1, 13):
         ax.axvline(x=date(datetime.now().year, month, 1), color='grey', linestyle='--', linewidth=0.5)
 
-    ax.axvline(x=today_date, color='red', linestyle='-', linewidth=1.5, label='Fecha Actual')
-    plt.xticks(rotation=45)
-    ax.set_xlabel('Fecha')
-    ax.set_title('Líneas de tiempo de procesos')
+    # Asegurar que la línea vertical roja de "Hoy" sea visible
+    ax.axvline(x=today_date, color='red', linestyle='-', linewidth=2, label='Fecha Actual')
 
+    plt.xticks(rotation=45, fontsize=24)  # Tamaño de las etiquetas de fecha
+    ax.set_xlabel('Fecha', fontsize=32)  # Tamaño del texto del eje x (32)
+
+    # Aumentar el tamaño de los elementos en la leyenda y hacer más gruesos los colores
     ax.legend(
-        handles=[plt.Line2D([0], [0], color=color, lw=4) for phase, color in colors.items()] + 
-               [plt.Line2D([0], [0], color='red', lw=1.5)],
+        handles=[plt.Line2D([0], [0], color=color, lw=12) for phase, color in colors.items()] + 
+               [plt.Line2D([0], [0], color='red', lw=12)],  # Hacer las líneas de colores más gruesas (12)
         labels=list(colors.keys()) + ['Fecha Actual'],
         loc='lower center',
-        bbox_to_anchor=(0.5, -0.3),
-        ncol=len(colors) + 1
+        bbox_to_anchor=(0.5, -0.35),  # Mover la leyenda más abajo
+        ncol=len(colors) + 1,
+        fontsize=30  # Tamaño de la fuente de la leyenda (30)
     )
 
+    # Guardar el gráfico en un buffer
     buffer = io.BytesIO()
     plt.savefig(buffer, format='png')
     buffer.seek(0)
