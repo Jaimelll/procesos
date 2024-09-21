@@ -1,55 +1,105 @@
 {% extends 'base.html' %}
-{% load humanize %}  <!-- Asegúrate de cargar humanize aquí si lo necesitas -->
+{% load humanize %}
 
 {% block content %}
-<div class="container mt-5"> <!-- Cambiar a container para agregar márgenes laterales en pantallas grandes, mt-5 para margen superior -->
+<div class="container mt-5">
     <div class="row">
         <!-- Lista de Procesos -->
-        <div class="col-12 col-lg-8 mb-4"> <!-- Usar col-12 para pantallas pequeñas y col-lg-8 para grandes -->
+        <div class="col-12 col-lg-9 mb-4">
             <h2 class="mb-3">Lista de Procesos</h2>
             <!-- Botón para crear un nuevo proceso -->
             <a href="{% url 'proceso_create' %}" class="btn btn-success mb-3">Crear Nuevo Proceso</a>
-            <div class="table-responsive"> <!-- Hace la tabla responsiva -->
+            <div class="table-responsive">
                 <table class="table table-striped">
                     <thead>
                         <tr>
                             <th>Número</th>
+                            <th>Dirección</th>
                             <th>Nombre</th>
                             <th>Previsto</th>
-                            <th>Acciones</th>
+                            <th class="text-right">Acciones</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {% for proceso in procesos %}
+                        {% for proceso in page_obj %}
                         <tr>
                             <td>{{ proceso.numero }}</td>
-                            <!-- Aquí hacemos que el nombre del proceso sea un enlace a la lista de eventos -->
+                            <td>{{ proceso.direccion }}</td>
                             <td>
                                 <a href="{% url 'evento_list' proceso_id=proceso.id %}">
                                     {{ proceso.nombre }}
                                 </a>
                             </td>
                             <td>{{ proceso.previsto|floatformat:2|intcomma }}</td>
-                            <td>
-                                <a href="{% url 'proceso_detail' proceso.pk %}" class="btn btn-info btn-sm">Ver</a>
-                                <a href="{% url 'proceso_update' proceso.pk %}" class="btn btn-warning btn-sm">Editar</a>
-                                <a href="{% url 'proceso_delete' proceso.pk %}" class="btn btn-danger btn-sm">Eliminar</a>
+                            <td class="text-right">
+                                <div class="btn-group" role="group">
+                                    <a href="{% url 'proceso_detail' proceso.pk %}" class="btn btn-info btn-sm">Ver</a>
+                                    <a href="{% url 'proceso_update' proceso.pk %}" class="btn btn-warning btn-sm">Editar</a>
+                                    <a href="{% url 'proceso_delete' proceso.pk %}" class="btn btn-danger btn-sm">Eliminar</a>
+                                </div>
                             </td>
                         </tr>
                         {% endfor %}
                     </tbody>
                 </table>
             </div>
+
+            <!-- Paginación -->
+            <nav aria-label="Page navigation">
+                <ul class="pagination justify-content-center">
+                    {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page=1" aria-label="Primera">
+                            <span aria-hidden="true">&laquo;&laquo;</span>
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}" aria-label="Anterior">
+                            <span aria-hidden="true">&laquo;</span>
+                        </a>
+                    </li>
+                    {% endif %}
+
+                    <!-- Mostrar los números de página -->
+                    {% for num in page_obj.paginator.page_range %}
+                    <li class="page-item {% if page_obj.number == num %}active{% endif %}">
+                        <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                    </li>
+                    {% endfor %}
+
+                    {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}" aria-label="Siguiente">
+                            <span aria-hidden="true">&raquo;</span>
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}" aria-label="Última">
+                            <span aria-hidden="true">&raquo;&raquo;</span>
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
         </div>
 
         <!-- Sidebar de Filtros -->
-        <div class="col-12 col-lg-4"> <!-- Usar col-12 para pantallas pequeñas y col-lg-4 para grandes -->
-            <div class="card mb-4"> <!-- Usar una tarjeta para mejorar la apariencia del filtro -->
+        <div class="col-12 col-lg-3">
+            <div class="card mb-4">
                 <div class="card-body">
                     <h4 class="card-title mb-3">Filtrar Procesos</h4>
                     <form method="get">
-                        {{ form.as_p }}
-                        <button type="submit" class="btn btn-primary w-100">Filtrar</button> <!-- Botón de filtro más ancho -->
+                        {{ form.numero.label_tag }}
+                        {{ form.numero }}
+                        {{ form.direccion.label_tag }}
+                        {{ form.direccion }}
+                        {{ form.nombre.label_tag }}
+                        {{ form.nombre }}
+                        {{ form.previsto.label_tag }}
+                        {{ form.previsto }}
+                        {{ form.previsto_condition.label_tag }}
+                        {{ form.previsto_condition }}
+                        <button type="submit" class="btn btn-primary w-100">Filtrar</button>
                     </form>
                 </div>
             </div>

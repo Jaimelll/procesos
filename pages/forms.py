@@ -33,6 +33,23 @@ class CustomUserCreationForm(UserCreationForm):
         fields = ('username', 'email', 'password1', 'password2')
 
 class ProcesoFilterForm(forms.Form):
-    numero = forms.IntegerField(required=False, label='Número')
-    nombre = forms.CharField(required=False, max_length=100, label='Nombre')
-    descripcion = forms.CharField(required=False, max_length=100, label='Descripción')
+    numero = forms.IntegerField(
+        required=False, 
+        label='Número', 
+        widget=forms.TextInput(attrs={'placeholder': 'Ingrese número'})  # Cambiar a TextInput para permitir entrada manual
+    )
+    nombre = forms.CharField(required=False, label='Nombre', max_length=100)
+    
+    direccion = forms.CharField(required=False, label='Dirección', max_length=50)
+    
+    previsto = forms.DecimalField(
+        required=False, 
+        label='Previsto', 
+        widget=forms.TextInput(attrs={'placeholder': 'Ingrese monto previsto'})  # Cambiar a TextInput para el campo de monto
+    )
+    previsto_condition = forms.ChoiceField(
+        required=False,
+        label='Condición Previsto',
+        choices=[('lt', 'Menor que'), ('gt', 'Mayor que')],
+        widget=forms.Select()
+    )

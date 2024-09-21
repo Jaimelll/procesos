@@ -8,6 +8,7 @@ from django.views.generic import CreateView
 from django.db.models import Count, Sum
 from datetime import datetime, date
 import locale
+from django.core.paginator import Paginator  # Importar Paginator
 
 # Importar los gráficos desde los archivos separados
 from .graphic import generate_graphic
@@ -77,12 +78,21 @@ def proceso_list(request):
             procesos = procesos.filter(numero=form.cleaned_data['numero'])
         if form.cleaned_data['nombre']:
             procesos = procesos.filter(nombre__icontains=form.cleaned_data['nombre'])
-        if form.cleaned_data['descripcion']:
-            procesos = procesos.filter(descripcion__icontains=form.cleaned_data['descripcion'])
+        if form.cleaned_data['previsto']:
+            condition = form.cleaned_data.get('previsto_condition')
+            if condition == 'gt':  # Si la condición es "Mayor que"
+                procesos = procesos.filter(previsto__gt=form.cleaned_data['previsto'])
+            elif condition == 'lt':  # Si la condición es "Menor que"
+                procesos = procesos.filter(previsto__lt=form.cleaned_data['previsto'])
+
+    # Añadir paginación: 10 elementos por página
+    paginator = Paginator(procesos, 10)  # Mostrar 10 elementos por página
+    page_number = request.GET.get('page')  # Obtener el número de la página actual
+    page_obj = paginator.get_page(page_number)  # Obtener los objetos de la página actual
 
     context = {
         'form': form,
-        'procesos': procesos
+        'page_obj': page_obj  # Pasar el objeto de la página al contexto
     }
     return render(request, 'pages/proceso_list.html', context)
 
