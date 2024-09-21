@@ -5,13 +5,13 @@ from .models import Proceso, Evento
 from .forms import ProcesoForm, CustomUserCreationForm, ProcesoFilterForm, EventoForm
 from django.urls import reverse_lazy
 from django.views.generic import CreateView
-import matplotlib.pyplot as plt
-import io
-import base64
-from datetime import datetime, date, timedelta
-import matplotlib.dates as mdates
 from django.db.models import Count, Sum
+from datetime import datetime, date
 import locale
+
+# Importar los gráficos desde los archivos separados
+from .graphic import generate_graphic
+from .graphic2 import generate_pie_chart
 
 # Manejo del locale de manera segura
 try:
@@ -22,22 +22,18 @@ except locale.Error:
 
 @login_required
 def home_view(request):
-    # Obtener todas las direcciones únicas
     direcciones = Proceso.objects.values_list('direccion', flat=True).distinct()
 
-    # Filtrar procesos por dirección seleccionada
     direccion_seleccionada = request.GET.get('direccion', None)
     if direccion_seleccionada:
         procesos = Proceso.objects.filter(direccion=direccion_seleccionada)
     else:
-        # Seleccionar la dirección con más procesos por defecto
         direccion_seleccionada = Proceso.objects.values('direccion').annotate(total=Count('id')).order_by('-total').first()['direccion']
         procesos = Proceso.objects.filter(direccion=direccion_seleccionada)
     
     eventos = Evento.objects.filter(proceso__in=procesos).order_by('fecha')
 
-    # Generar gráfico de líneas de tiempo
-    fig, ax = plt.subplots(figsize=(12, 8))
+    # Colores y actividades definidos para el gráfico de líneas de tiempo
     colors = {
         'Requerimiento': 'skyblue',
         'Indagación de Mercado': 'orange',
@@ -45,13 +41,6 @@ def home_view(request):
         'Firma de contrato': 'purple',
         'Entrega del bien': 'red'
     }
-
-    # Fecha de referencia: inicio del año (como `date`)
-    start_of_year = date(datetime.now().year, 1, 1)
-    today_date = date.today()  # Fecha actual
-
-    # Definir las fases y las actividades correspondientes
-    phases = ['Requerimiento', 'Indagación de Mercado', 'Convocatoria', 'Firma de contrato', 'Entrega del bien']
     activities = [
         'Fecha de Requerimiento',
         'Indagación Mercado',
@@ -60,133 +49,19 @@ def home_view(request):
         'Ingreso Estimado Almacén',
         'Fecha Estimada de Conformidad'
     ]
-
-    # Definir la longitud máxima para truncar los nombres de los procesos
     max_label_length = len("AUDÍFONOS CON MICRÓFONO PARA LOS SEHO")
 
-    for proceso in procesos:
-        evento_proceso = eventos.filter(proceso=proceso).order_by('fecha')
-        if evento_proceso.exists():
-            phase_start_dates = []
-            phase_durations = []
+    # Generar el primer gráfico
+    graphic = generate_graphic(procesos, eventos, colors, activities, max_label_length)
 
-            # Inicializar la fecha de inicio
-            start_date = evento_proceso.filter(actividad=activities[0]).first().fecha if evento_proceso.filter(actividad=activities[0]).exists() else start_of_year
-
-            # Calcular las duraciones de las fases
-            for i in range(len(phases)):
-                current_activity = activities[i]
-                next_activity = activities[i + 1] if i + 1 < len(activities) else None
-                
-                phase_event = evento_proceso.filter(actividad=current_activity).first()
-                
-                if phase_event:
-                    phase_start = phase_event.fecha
-                    phase_start_dates.append(phase_start)
-
-                    if next_activity:
-                        next_phase_event = evento_proceso.filter(actividad=next_activity).first()
-                        if next_phase_event:
-                            phase_durations.append((next_phase_event.fecha - phase_event.fecha).days)
-                        else:
-                            # Buscar la próxima actividad disponible y extender la duración hasta esa
-                            next_available_event = evento_proceso.filter(actividad__in=activities[i+1:]).first()
-                            if next_available_event:
-                                phase_durations.append((next_available_event.fecha - phase_event.fecha).days)
-                            else:
-                                # Duración por defecto si no existe la siguiente fase disponible
-                                phase_durations.append(5)
-                    else:
-                        phase_durations.append(5)  # Duración por defecto para la última fase
-                else:
-                    phase_start_dates.append(phase_start_dates[-1] if phase_start_dates else start_of_year)
-                    phase_durations.append(0)
-
-            # Truncar el nombre del proceso y agregar el número
-            proceso_label = f"{proceso.numero} - {proceso.nombre[:max_label_length]}{'...' if len(proceso.nombre) > max_label_length else ''}"
-
-            # Graficar las fases de tiempo solo con etapas conocidas
-            ax.barh(
-                proceso_label, 
-                phase_durations, 
-                left=mdates.date2num(phase_start_dates),  # Convertir fechas a números para matplotlib
-                color=[colors.get(phase, 'grey') for phase in phases]
-            )
-
-    # Configuración del eje x para mostrar fechas
-    ax.xaxis.set_major_locator(mdates.MonthLocator())  # Ubicar una línea en cada mes
-    ax.xaxis.set_major_formatter(mdates.DateFormatter('%d-%b'))  # Formato de fecha (día-mes)
-
-    # Reducir aún más el tamaño de la fuente de las etiquetas del eje y
-    ax.tick_params(axis='y', labelsize=7)
-
-    # Ajustar los márgenes para que haya más espacio para los nombres y la leyenda
-    plt.subplots_adjust(left=0.35, right=0.95, bottom=0.3)  # Ajustar el espacio izquierdo, derecho, y el inferior del gráfico
-
-    # Agregar líneas verticales para cada mes
-    for month in range(1, 13):
-        ax.axvline(x=date(datetime.now().year, month, 1), color='grey', linestyle='--', linewidth=0.5)
-
-    # Línea vertical para la fecha actual
-    ax.axvline(x=today_date, color='red', linestyle='-', linewidth=1.5, label='Fecha Actual')
-
-    # Rotar las etiquetas de fechas para mayor legibilidad
-    plt.xticks(rotation=45)
-
-    ax.set_xlabel('Fecha')
-    ax.set_title('Líneas de tiempo de procesos')
-    
-    # Agregar leyenda en la parte inferior
-    ax.legend(
-        handles=[plt.Line2D([0], [0], color=color, lw=4) for phase, color in colors.items()] + 
-               [plt.Line2D([0], [0], color='red', lw=1.5)],  # Agregar línea de leyenda para la fecha actual
-        labels=list(colors.keys()) + ['Fecha Actual'],
-        loc='lower center',  # Colocar la leyenda en la parte inferior
-        bbox_to_anchor=(0.5, -0.3),  # Ajustar la posición de la leyenda
-        ncol=len(colors) + 1  # Mostrar todas las leyendas en una fila
-    )
-
-    # Guardar gráfico en un buffer
-    buffer = io.BytesIO()
-    plt.savefig(buffer, format='png')
-    buffer.seek(0)
-    image_png = buffer.getvalue()
-    buffer.close()
-    graphic = base64.b64encode(image_png).decode('utf-8')
-
-    # Generar gráfico de torta (pie chart) para procesos por dirección
-    fig2, ax2 = plt.subplots(figsize=(8, 6))
-    # Asumiendo que 'direccion' es un campo en tu modelo Proceso
+    # Generar el gráfico de torta
     procesos_por_direccion = Proceso.objects.values('direccion').annotate(total_procesos=Count('id'), total_previsto=Sum('previsto'))
-    direcciones = [item['direccion'] for item in procesos_por_direccion]
-    cantidades = [item['total_procesos'] for item in procesos_por_direccion]
-
-    # Formatear el total previsto de forma segura en soles peruanos
-    def format_currency(value):
-        try:
-            return f"{value:,.2f} PEN"  # Formato numérico con comas y dos decimales
-        except ValueError:
-            # Formato alternativo si el valor es inválido
-            return f"{value:,.2f} PEN"
-
-    etiquetas = [f"{item['direccion']}\nProcesos: {item['total_procesos']}\nMonto: {format_currency(item['total_previsto'])}" for item in procesos_por_direccion]
-
-    # Crear el gráfico de torta
-    ax2.pie(cantidades, labels=etiquetas, autopct='%1.1f%%', startangle=140)
-    ax2.axis('equal')  # Para que el gráfico de torta sea circular
-
-    # Guardar gráfico de pie chart en un buffer
-    buffer2 = io.BytesIO()
-    plt.savefig(buffer2, format='png')
-    buffer2.seek(0)
-    image_png2 = buffer2.getvalue()
-    buffer2.close()
-    graphic2 = base64.b64encode(image_png2).decode('utf-8')
+    graphic2 = generate_pie_chart(procesos_por_direccion)
 
     context = {
-        'graphic': graphic, 
+        'graphic': graphic,
         'graphic2': graphic2,
-        'direcciones': direcciones, 
+        'direcciones': direcciones,
         'direccion_seleccionada': direccion_seleccionada
     }
     return render(request, 'home.html', context)
