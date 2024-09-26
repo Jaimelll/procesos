@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    Confirmar Eliminación de Parámetro
+{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <h1 class="text-center mb-4">¿Estás seguro de que deseas eliminar este parámetro?</h1>
+    <form method="post" class="text-center">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger">Eliminar</button>
+        <a href="{% url 'parametro_list' %}" class="btn btn-secondary">Cancelar</a>
+    </form>
+</div>
+{% endblock %}

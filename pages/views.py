@@ -1,8 +1,8 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
-from .models import Proceso, Evento
-from .forms import ProcesoForm, CustomUserCreationForm, ProcesoFilterForm, EventoForm
+from .models import Proceso, Evento, Parametro
+from .forms import ProcesoForm, CustomUserCreationForm, ProcesoFilterForm, EventoForm, ParametroForm, ParametroFilterForm
 from django.urls import reverse_lazy
 from django.views.generic import CreateView
 from django.db.models import Count, Sum
@@ -191,4 +191,61 @@ def evento_delete(request, proceso_id, pk):
 
 def about_view(request):
     """Vista para la página 'About'."""
-    return render(request, 'about.html')
+    return render(request, 'pages/about.html')
+
+@login_required
+def parametro_list(request):
+    form = ParametroFilterForm(request.GET)
+    parametros = Parametro.objects.all()
+
+    if form.is_valid():
+        if form.cleaned_data['nombre']:
+            parametros = parametros.filter(nombre__icontains=form.cleaned_data['nombre'])
+        if form.cleaned_data['tipo']:
+            parametros = parametros.filter(tipo=form.cleaned_data['tipo'])
+
+    paginator = Paginator(parametros, 10)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    context = {
+        'form': form,
+        'page_obj': page_obj
+    }
+    return render(request, 'pages/parametro_list.html', context)
+
+@login_required
+def parametro_detail(request, pk):
+    parametro = get_object_or_404(Parametro, pk=pk)
+    return render(request, 'pages/parametro_detail.html', {'parametro': parametro})
+
+@login_required
+def parametro_create(request):
+    if request.method == "POST":
+        form = ParametroForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('parametro_list')
+    else:
+        form = ParametroForm()
+    return render(request, 'pages/parametro_form.html', {'form': form})
+
+@login_required
+def parametro_update(request, pk):
+    parametro = get_object_or_404(Parametro, pk=pk)
+    if request.method == "POST":
+        form = ParametroForm(request.POST, instance=parametro)
+        if form.is_valid():
+            form.save()
+            return redirect('parametro_list')
+    else:
+        form = ParametroForm(instance=parametro)
+    return render(request, 'pages/parametro_form.html', {'form': form})
+
+@login_required
+def parametro_delete(request, pk):
+    parametro = get_object_or_404(Parametro, pk=pk)
+    if request.method == "POST":
+        parametro.delete()
+        return redirect('parametro_list')
+    return render(request, 'pages/parametro_confirm_delete.html', {'parametro': parametro})

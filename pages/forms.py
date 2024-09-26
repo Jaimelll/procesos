@@ -1,5 +1,5 @@
 from django import forms
-from .models import Proceso, Evento
+from .models import Proceso, Evento, Parametro
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
 
@@ -53,3 +53,13 @@ class ProcesoFilterForm(forms.Form):
         choices=[('lt', 'Menor que'), ('gt', 'Mayor que')],
         widget=forms.Select()
     )
+
+class ParametroForm(forms.ModelForm):
+    class Meta:
+        model = Parametro
+        fields = ['nombre', 'descripcion', 'tipo']
+
+class ParametroFilterForm(forms.Form):
+    nombre = forms.CharField(required=False, label='Nombre', max_length=100)
+    tipo = forms.CharField(required=False, label='Tipo', max_length=20)
+

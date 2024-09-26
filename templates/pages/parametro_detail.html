@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    Detalles del Parámetro
+{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <h1 class="text-center mb-4">Detalles del Parámetro</h1>
+    <table class="table table-bordered">
+        <tr>
+            <th>ID</th>
+            <td>{{ parametro.id }}</td>
+        </tr>
+        <tr>
+            <th>Nombre</th>
+            <td>{{ parametro.nombre }}</td>
+        </tr>
+        <tr>
+            <th>Descripción</th>
+            <td>{{ parametro.descripcion }}</td>
+        </tr>
+        <tr>
+            <th>Tipo</th>
+            <td>{{ parametro.tipo }}</td>
+        </tr>
+    </table>
+    <!-- Botones de acciones -->
+    <a href="{% url 'parametro_list' %}" class="btn btn-secondary mt-3">Volver a la lista de parámetros</a>
+    <a href="{% url 'parametro_update' parametro.pk %}" class="btn btn-warning mt-3">Editar Parámetro</a>
+    <a href="{% url 'parametro_create' %}" class="btn btn-success mt-3">Crear Nuevo Parámetro</a>
+</div>
+{% endblock %}
