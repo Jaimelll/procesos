@@ -29,5 +29,6 @@
     <a href="{% url 'parametro_list' %}" class="btn btn-secondary mt-3">Volver a la lista de parámetros</a>
     <a href="{% url 'parametro_update' parametro.pk %}" class="btn btn-warning mt-3">Editar Parámetro</a>
     <a href="{% url 'parametro_create' %}" class="btn btn-success mt-3">Crear Nuevo Parámetro</a>
+    <a href="{% url 'formula_list' parametro.pk %}" class="btn btn-primary mt-3">Ver Fórmulas</a>
 </div>
 {% endblock %}

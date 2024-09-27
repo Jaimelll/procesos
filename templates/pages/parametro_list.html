@@ -21,7 +21,11 @@
                         {% for parametro in page_obj %}
                         <tr>
                             <td>{{ parametro.id }}</td>
-                            <td>{{ parametro.nombre }}</td>
+                            <td>
+                                <a href="{% url 'formula_list' parametro_id=parametro.id %}">
+                                    {{ parametro.nombre }}
+                                </a>
+                            </td>
                             <td>{{ parametro.tipo }}</td>
                             <td class="text-right">
                                 <div class="btn-group" role="group">

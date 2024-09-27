@@ -1,8 +1,8 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
-from .models import Proceso, Evento, Parametro
-from .forms import ProcesoForm, CustomUserCreationForm, ProcesoFilterForm, EventoForm, ParametroForm, ParametroFilterForm
+from .models import Proceso, Evento, Parametro, Formula
+from .forms import ProcesoForm, CustomUserCreationForm, ProcesoFilterForm, EventoForm, ParametroForm, ParametroFilterForm, FormulaForm
 from django.urls import reverse_lazy
 from django.views.generic import CreateView
 from django.db.models import Count, Sum
@@ -138,8 +138,6 @@ class SignUpView(CreateView):
     success_url = reverse_lazy('login')
     template_name = 'registration/signup.html'
 
-
-
 # Vistas para Eventos
 @login_required
 def evento_list(request, proceso_id):
@@ -249,3 +247,54 @@ def parametro_delete(request, pk):
         parametro.delete()
         return redirect('parametro_list')
     return render(request, 'pages/parametro_confirm_delete.html', {'parametro': parametro})
+
+from .models import Formula
+from .forms import FormulaForm
+
+@login_required
+def formula_list(request, parametro_id):
+    parametro = get_object_or_404(Parametro, id=parametro_id)
+    formulas = Formula.objects.filter(parametro=parametro)
+    return render(request, 'pages/formula_list.html', {'formulas': formulas, 'parametro': parametro})
+
+@login_required
+def formula_detail(request, parametro_id, pk):
+    parametro = get_object_or_404(Parametro, id=parametro_id)
+    formula = get_object_or_404(Formula, pk=pk, parametro=parametro)
+    return render(request, 'pages/formula_detail.html', {'formula': formula, 'parametro': parametro})
+
+@login_required
+def formula_create(request, parametro_id):
+    parametro = get_object_or_404(Parametro, id=parametro_id)
+    if request.method == "POST":
+        form = FormulaForm(request.POST)
+        if form.is_valid():
+            formula = form.save(commit=False)
+            formula.parametro = parametro
+            formula.save()
+            return redirect('formula_list', parametro_id=parametro.id)
+    else:
+        form = FormulaForm()
+    return render(request, 'pages/formula_form.html', {'form': form, 'parametro': parametro})
+
+@login_required
+def formula_update(request, parametro_id, pk):
+    parametro = get_object_or_404(Parametro, id=parametro_id)
+    formula = get_object_or_404(Formula, pk=pk, parametro=parametro)
+    if request.method == "POST":
+        form = FormulaForm(request.POST, instance=formula)
+        if form.is_valid():
+            form.save()
+            return redirect('formula_list', parametro_id=parametro.id)
+    else:
+        form = FormulaForm(instance=formula)
+    return render(request, 'pages/formula_form.html', {'form': form, 'formula': formula, 'parametro': parametro})
+
+@login_required
+def formula_delete(request, parametro_id, pk):
+    parametro = get_object_or_404(Parametro, id=parametro_id)
+    formula = get_object_or_404(Formula, pk=pk, parametro=parametro)
+    if request.method == "POST":
+        formula.delete()
+        return redirect('formula_list', parametro_id=parametro.id)
+    return render(request, 'pages/formula_confirm_delete.html', {'formula': formula, 'parametro': parametro})

@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    Detalle de la Fórmula
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <!-- Sidebar con información del Parámetro -->
+        <div class="col-md-4">
+            <h4>Detalles del Parámetro</h4>
+            <p><strong>ID:</strong> {{ parametro.id }}</p>
+            <p><strong>Nombre:</strong> {{ parametro.nombre }}</p>
+            <p><strong>Tipo:</strong> {{ parametro.tipo }}</p>
+        </div>
+
+        <!-- Detalle de la Fórmula -->
+        <div class="col-md-8">
+            <h2>Detalle de la Fórmula</h2>
+            <p><strong>Nombre:</strong> {{ formula.nombre }}</p>
+            <p><strong>Descripción:</strong> {{ formula.descripcion }}</p>
+            <p><strong>Orden:</strong> {{ formula.orden }}</p>
+            <p><strong>Observación:</strong> {{ formula.obs }}</p>
+            <p><strong>Cantidad:</strong> {{ formula.cantidad }}</p>
+            <p><strong>Número:</strong> {{ formula.numero }}</p>
+            <p><strong>Actividad:</strong> {{ formula.acti }}</p>
+            <p><strong>Responsable:</strong> {{ formula.respon }}</p>
+            <p><strong>Responsable 2:</strong> {{ formula.respon2 }}</p>
+        </div>
+    </div>
+</div>
+{% endblock %}

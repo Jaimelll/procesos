@@ -1,6 +1,6 @@
 from django.urls import path
 from django.contrib.auth.views import LogoutView
-from .views import home_view, SignUpView, proceso_list, proceso_detail, proceso_create, proceso_update, proceso_delete, evento_list, evento_detail, evento_create, evento_update, evento_delete, about_view, parametro_list, parametro_detail, parametro_create, parametro_update, parametro_delete  # Importar 'about_view'
+from .views import home_view, SignUpView, proceso_list, proceso_detail, proceso_create, proceso_update, proceso_delete, evento_list, evento_detail, evento_create, evento_update, evento_delete, about_view, parametro_list, parametro_detail, parametro_create, parametro_update, parametro_delete, formula_list, formula_detail, formula_create, formula_update, formula_delete  # Importar 'about_view'
 
 urlpatterns = [
     path('', home_view, name='home'),
@@ -24,4 +24,11 @@ urlpatterns = [
     path('parametros/new/', parametro_create, name='parametro_create'),
     path('parametros/<int:pk>/edit/', parametro_update, name='parametro_update'),
     path('parametros/<int:pk>/delete/', parametro_delete, name='parametro_delete'),
+    
+    # URLs para fórmulas
+    path('parametros/<int:parametro_id>/formulas/', formula_list, name='formula_list'),
+    path('parametros/<int:parametro_id>/formulas/<int:pk>/', formula_detail, name='formula_detail'),
+    path('parametros/<int:parametro_id>/formulas/new/', formula_create, name='formula_create'),
+    path('parametros/<int:parametro_id>/formulas/<int:pk>/edit/', formula_update, name='formula_update'),
+    path('parametros/<int:parametro_id>/formulas/<int:pk>/delete/', formula_delete, name='formula_delete'),
 ]

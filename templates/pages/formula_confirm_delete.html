@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    Confirmar Eliminación de Fórmula
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>¿Estás seguro de que deseas eliminar la fórmula: {{ formula.nombre }}?</h2>
+    <form method="post">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger">Eliminar</button>
+        <a href="{% url 'formula_list' parametro.id %}" class="btn btn-secondary">Cancelar</a>
+    </form>
+</div>
+{% endblock %}

@@ -44,3 +44,22 @@ class Parametro(models.Model):
         verbose_name = "Parámetro"
         verbose_name_plural = "Parámetros"
         unique_together = ['tipo', 'nombre']
+
+class Formula(models.Model):
+    parametro = models.ForeignKey(Parametro, on_delete=models.CASCADE, related_name='formulas')
+    nombre = models.CharField(max_length=100)
+    descripcion = models.TextField(blank=True, null=True)
+    orden = models.IntegerField()
+    obs = models.CharField(max_length=255, blank=True, null=True)
+    cantidad = models.IntegerField(null=True, blank=True)
+    numero = models.IntegerField(null=True, blank=True)
+    acti = models.CharField(max_length=50, blank=True, null=True)
+    respon = models.CharField(max_length=100, blank=True, null=True)
+    respon2 = models.CharField(max_length=100, blank=True, null=True)
+
+    def __str__(self):
+        return f"{self.parametro.nombre} - {self.nombre}"
+
+    class Meta:
+        verbose_name = "Fórmula"
+        verbose_name_plural = "Fórmulas"
