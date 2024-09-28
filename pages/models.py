@@ -27,6 +27,7 @@ class Evento(models.Model):
     fecha = models.DateField()  # Campo de tipo fecha
     situacion = models.TextField(blank=True, null=True)  # Campo de texto largo
     importe = models.DecimalField(max_digits=10, decimal_places=2, default=0)  # Campo numérico con 2 decimales, por defecto 0
+    acti = models.IntegerField()  # Agregamos un valor por defecto de 0
 
     def __str__(self):
         return f"{self.actividad} - {self.proceso.nombre}"

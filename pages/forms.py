@@ -14,10 +14,17 @@ class ProcesoForm(forms.ModelForm):
         ]
 
 class EventoForm(forms.ModelForm):
+    acti = forms.ChoiceField(label="Actividad (Fórmula)")
+
     class Meta:
         model = Evento
-        fields = ['actividad', 'documento', 'fecha', 'situacion', 'importe']
-    
+        fields = ['actividad', 'documento', 'fecha', 'situacion', 'importe', 'acti']
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        formulas = Formula.objects.filter(parametro_id=12).order_by('orden')
+        self.fields['acti'].choices = [(f.orden, f.nombre) for f in formulas]
+
     def clean_importe(self):
         # Asegurarse de que el campo importe no sea nulo o vacío y asignar 0 por defecto
         importe = self.cleaned_data.get('importe')

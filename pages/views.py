@@ -141,42 +141,64 @@ class SignUpView(CreateView):
 # Vistas para Eventos
 @login_required
 def evento_list(request, proceso_id):
-    proceso = get_object_or_404(Proceso, id=proceso_id)
-    eventos = Evento.objects.filter(proceso=proceso)
-    return render(request, 'pages/evento_list.html', {'eventos': eventos, 'proceso': proceso})
+    proceso = get_object_or_404(Proceso, pk=proceso_id)
+    eventos = proceso.eventos.all()
+    formulas = Formula.objects.filter(parametro_id=12).order_by('orden')
+    
+    for evento in eventos:
+        formula = formulas.filter(orden=evento.acti).first()
+        if formula:
+            evento.acti_nombre = formula.nombre
+        else:
+            evento.acti_nombre = "N/A"
+    
+    context = {
+        'proceso': proceso,
+        'eventos': eventos,
+    }
+    return render(request, 'pages/evento_list.html', context)
 
 @login_required
-def evento_detail(request, proceso_id, pk):
-    proceso = get_object_or_404(Proceso, id=proceso_id)
-    evento = get_object_or_404(Evento, pk=pk, proceso=proceso)
-    return render(request, 'pages/evento_detail.html', {'evento': evento, 'proceso': proceso})
-
-@login_required
-def evento_create(request, proceso_id):
-    proceso = get_object_or_404(Proceso, id=proceso_id)
-    if request.method == "POST":
-        form = EventoForm(request.POST)
-        if form.is_valid():
-            evento = form.save(commit=False)
-            evento.proceso = proceso  # Asigna el proceso automáticamente
-            evento.save()
-            return redirect('evento_list', proceso_id=proceso.id)
+def evento_detail(request, proceso_id, evento_id):
+    proceso = get_object_or_404(Proceso, pk=proceso_id)
+    evento = get_object_or_404(Evento, pk=evento_id, proceso=proceso)
+    formula = Formula.objects.filter(parametro_id=12, orden=evento.acti).first()
+    
+    if formula:
+        evento.acti_nombre = formula.nombre
     else:
-        form = EventoForm()
-    return render(request, 'pages/evento_form.html', {'form': form, 'proceso': proceso})
+        evento.acti_nombre = "N/A"
+    
+    context = {
+        'proceso': proceso,
+        'evento': evento,
+    }
+    return render(request, 'pages/evento_detail.html', context)
 
 @login_required
-def evento_update(request, proceso_id, pk):
-    proceso = get_object_or_404(Proceso, id=proceso_id)
-    evento = get_object_or_404(Evento, pk=pk, proceso=proceso)
-    if request.method == "POST":
+def evento_create_update(request, proceso_id, evento_id=None):
+    proceso = get_object_or_404(Proceso, pk=proceso_id)
+    if evento_id:
+        evento = get_object_or_404(Evento, pk=evento_id, proceso=proceso)
+    else:
+        evento = None
+
+    if request.method == 'POST':
         form = EventoForm(request.POST, instance=evento)
         if form.is_valid():
-            form.save()
+            nuevo_evento = form.save(commit=False)
+            nuevo_evento.proceso = proceso
+            nuevo_evento.save()
             return redirect('evento_list', proceso_id=proceso.id)
     else:
         form = EventoForm(instance=evento)
-    return render(request, 'pages/evento_form.html', {'form': form, 'evento': evento, 'proceso': proceso})
+
+    context = {
+        'proceso': proceso,
+        'evento': evento,
+        'form': form,
+    }
+    return render(request, 'pages/evento_form.html', context)
 
 @login_required
 def evento_delete(request, proceso_id, pk):
