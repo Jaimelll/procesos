@@ -8,7 +8,11 @@ from django.views.generic import CreateView
 from django.db.models import Count, Sum
 from datetime import datetime, date
 import locale
-from django.core.paginator import Paginator  # Importar Paginator
+from django.core.paginator import Paginator
+import pandas as pd
+import matplotlib.pyplot as plt
+import io
+import base64
 
 # Importar los gráficos desde los archivos separados
 from .graphic import generate_graphic
@@ -16,22 +20,13 @@ from .graphic2 import generate_pie_chart
 
 # Manejo del locale de manera segura
 try:
-    locale.setlocale(locale.LC_ALL, 'es_PE.UTF-8')  # Cambiado a 'es_PE'
+    locale.setlocale(locale.LC_ALL, 'es_PE.UTF-8')
 except locale.Error:
-    # Puedes manejar el error aquí si el locale no está disponible
     pass
 
 @login_required
 def home_view(request):
-    direcciones = Proceso.objects.values_list('direccion', flat=True).distinct()
-
-    direccion_seleccionada = request.GET.get('direccion', None)
-    if direccion_seleccionada:
-        procesos = Proceso.objects.filter(direccion=direccion_seleccionada)
-    else:
-        direccion_seleccionada = Proceso.objects.values('direccion').annotate(total=Count('id')).order_by('-total').first()['direccion']
-        procesos = Proceso.objects.filter(direccion=direccion_seleccionada)
-    
+    procesos = Proceso.objects.all()
     eventos = Evento.objects.filter(proceso__in=procesos).order_by('fecha')
 
     # Colores y actividades definidos para el gráfico de líneas de tiempo
@@ -56,43 +51,41 @@ def home_view(request):
     graphic = generate_graphic(procesos, eventos, colors, activities, max_label_length)
 
     # Generar el gráfico de torta
-    procesos_por_direccion = Proceso.objects.values('direccion').annotate(total_procesos=Count('id'), total_previsto=Sum('previsto'))
-    graphic2 = generate_pie_chart(procesos_por_direccion)
+    procesos_por_nombre = Proceso.objects.values('nombre').annotate(total_procesos=Count('id'), total_estimado=Sum('estimado'))
+    graphic2 = generate_pie_chart(procesos_por_nombre)
 
     context = {
         'graphic': graphic,
         'graphic2': graphic2,
-        'direcciones': direcciones,
-        'direccion_seleccionada': direccion_seleccionada
+        'procesos': procesos,
     }
     return render(request, 'home.html', context)
 
 @login_required
 def proceso_list(request):
-    form = ProcesoFilterForm(request.GET)  # Inicializa el formulario con los datos GET
+    form = ProcesoFilterForm(request.GET)
     procesos = Proceso.objects.all()
 
-    # Filtrado basado en los campos del formulario
     if form.is_valid():
-        if form.cleaned_data['numero']:
-            procesos = procesos.filter(numero=form.cleaned_data['numero'])
+        if form.cleaned_data['nomenclatura']:
+            procesos = procesos.filter(nomenclatura__icontains=form.cleaned_data['nomenclatura'])
         if form.cleaned_data['nombre']:
             procesos = procesos.filter(nombre__icontains=form.cleaned_data['nombre'])
-        if form.cleaned_data['previsto']:
-            condition = form.cleaned_data.get('previsto_condition')
-            if condition == 'gt':  # Si la condición es "Mayor que"
-                procesos = procesos.filter(previsto__gt=form.cleaned_data['previsto'])
-            elif condition == 'lt':  # Si la condición es "Menor que"
-                procesos = procesos.filter(previsto__lt=form.cleaned_data['previsto'])
+        if form.cleaned_data['estimado'] and form.cleaned_data['estimado_condition']:
+            if form.cleaned_data['estimado_condition'] == 'gt':
+                procesos = procesos.filter(estimado__gt=form.cleaned_data['estimado'])
+            elif form.cleaned_data['estimado_condition'] == 'lt':
+                procesos = procesos.filter(estimado__lt=form.cleaned_data['estimado'])
+            elif form.cleaned_data['estimado_condition'] == 'eq':
+                procesos = procesos.filter(estimado=form.cleaned_data['estimado'])
 
-    # Añadir paginación: 10 elementos por página
-    paginator = Paginator(procesos, 10)  # Mostrar 10 elementos por página
-    page_number = request.GET.get('page')  # Obtener el número de la página actual
-    page_obj = paginator.get_page(page_number)  # Obtener los objetos de la página actual
+    paginator = Paginator(procesos, 10)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
 
     context = {
         'form': form,
-        'page_obj': page_obj  # Pasar el objeto de la página al contexto
+        'page_obj': page_obj
     }
     return render(request, 'pages/proceso_list.html', context)
 
@@ -106,8 +99,8 @@ def proceso_create(request):
     if request.method == "POST":
         form = ProcesoForm(request.POST)
         if form.is_valid():
-            form.save()
-            return redirect('proceso_list')
+            proceso = form.save()
+            return redirect('proceso_detail', pk=proceso.pk)
     else:
         form = ProcesoForm()
     return render(request, 'pages/proceso_form.html', {'form': form})
@@ -118,8 +111,8 @@ def proceso_update(request, pk):
     if request.method == "POST":
         form = ProcesoForm(request.POST, instance=proceso)
         if form.is_valid():
-            form.save()
-            return redirect('proceso_list')
+            proceso = form.save()
+            return redirect('proceso_detail', pk=proceso.pk)
     else:
         form = ProcesoForm(instance=proceso)
     return render(request, 'pages/proceso_form.html', {'form': form})

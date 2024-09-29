@@ -25,6 +25,7 @@
             <p><strong>Situación:</strong> {{ evento.situacion }}</p>
             <p><strong>Importe:</strong> {{ evento.importe }}</p>
             <p><strong>Actividad (Fórmula):</strong> {{ evento.acti_nombre }}</p>
+            <a href="{% url 'evento_detail' proceso_id=proceso.id evento_id=evento.id %}">Ver detalle del evento</a>
         </div>
     </div>
 </div>

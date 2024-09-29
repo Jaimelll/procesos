@@ -1,14 +1,12 @@
 from django.contrib import admin
-from .models import Proceso, Evento
+from .models import Proceso, Evento, Parametro, Formula
 
-@admin.register(Proceso)
 class ProcesoAdmin(admin.ModelAdmin):
-    list_display = ['numero', 'nombre', 'estado', 'fecha_inicio']
-    search_fields = ['numero', 'nombre']
-    list_filter = ['estado', 'direccion', 'grupo']
+    list_display = ('nomenclatura', 'nombre', 'estimado', 'periodo')
+    list_filter = ('moneda', 'periodo', 'convocatoria')
+    search_fields = ('nomenclatura', 'nombre', 'descripcion')
 
-@admin.register(Evento)
-class EventoAdmin(admin.ModelAdmin):
-    list_display = ['proceso', 'actividad', 'fecha', 'importe']
-    search_fields = ['proceso__nombre', 'actividad']
-    list_filter = ['fecha']
+admin.site.register(Proceso, ProcesoAdmin)
+admin.site.register(Evento)
+admin.site.register(Parametro)
+admin.site.register(Formula)

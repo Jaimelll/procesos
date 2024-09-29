@@ -3,21 +3,27 @@ import io
 import base64
 
 def format_currency(value):
-    try:
-        return f"{value:,.2f} PEN"
-    except ValueError:
-        return f"{value:,.2f} PEN"
+    return f"{value:,.2f} PEN"
 
-def generate_pie_chart(procesos_por_direccion):
-    # Aumentar aún más el tamaño del gráfico
-    fig2, ax2 = plt.subplots(figsize=(20, 16))  # Aumentar el tamaño del gráfico (20x16)
+def generate_pie_chart(procesos):
+    fig2, ax2 = plt.subplots(figsize=(20, 16))
 
-    direcciones = [item['direccion'] for item in procesos_por_direccion]
-    cantidades = [item['total_procesos'] for item in procesos_por_direccion]
+    mercados = {"Extranjero": 0, "Nacional": 0}
+    montos = {"Extranjero": 0, "Nacional": 0}
 
-    etiquetas = [f"{item['direccion']}\nProcesos: {item['total_procesos']}\nMonto: {format_currency(item['total_previsto'])}" for item in procesos_por_direccion]
+    for proceso in procesos:
+        nombre = proceso.get('nombre') if isinstance(proceso, dict) else getattr(proceso, 'nombre', None)
+        estimado = proceso.get('estimado', 0) if isinstance(proceso, dict) else getattr(proceso, 'estimado', 0)
+        
+        if nombre:
+            mercado = "Extranjero" if nombre.startswith("RE") else "Nacional"
+            mercados[mercado] += 1
+            montos[mercado] += estimado
 
-    ax2.pie(cantidades, labels=etiquetas, autopct='%1.1f%%', startangle=140, textprops={'fontsize': 48})  # Aumentar tamaño de fuente a 16
+    etiquetas = [f"{mercado}\nProcesos: {cantidad}\nMonto: {format_currency(montos[mercado])}" 
+                 for mercado, cantidad in mercados.items()]
+
+    ax2.pie(list(mercados.values()), labels=etiquetas, autopct='%1.1f%%', startangle=140, textprops={'fontsize': 48})
     ax2.axis('equal')
 
     buffer2 = io.BytesIO()

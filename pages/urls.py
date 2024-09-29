@@ -20,7 +20,7 @@ urlpatterns = [
     
     # URLs para eventos
     path('procesos/<int:proceso_id>/eventos/', evento_list, name='evento_list'),
-    path('procesos/<int:proceso_id>/eventos/<int:pk>/', evento_detail, name='evento_detail'),
+    path('procesos/<int:proceso_id>/eventos/<int:evento_id>/', evento_detail, name='evento_detail'),
     path('procesos/<int:proceso_id>/eventos/new/', evento_create_update, name='evento_create'),
     path('procesos/<int:proceso_id>/eventos/create/', evento_create_update, name='evento_create'),
     path('procesos/<int:proceso_id>/eventos/<int:evento_id>/update/', evento_create_update, name='evento_update'),

@@ -1,36 +1,38 @@
 from django.db import models
+from django.utils import timezone
 
 class Proceso(models.Model):
-    numero = models.IntegerField(unique=True)  # Corresponde a la columna 'Nº' en el Excel
-    nombre = models.CharField(max_length=100, blank=True, null=True)  # Otro campo de ejemplo
-    descripcion = models.TextField(blank=True, null=True)  # Campo de descripción
-    direccion = models.CharField(max_length=50, blank=True, null=True)  # Nuevo campo 'direccion'
-    grupo = models.CharField(max_length=100, blank=True, null=True)  # Nuevo campo 'grupo'
-    obtencion = models.CharField(max_length=100, blank=True, null=True)  # Nuevo campo 'obtencion'
-    cant_items = models.IntegerField(null=True, blank=True)  # Nuevo campo 'cant_items'
-    cant_unidades = models.IntegerField(null=True, blank=True)  # Nuevo campo 'cant_unidades'
-    previsto = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)  # Nuevo campo 'previsto'
-    estimado = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)  # Nuevo campo 'estimado'
-    estado = models.CharField(max_length=100, blank=True, null=True)  # Nuevo campo 'estado'
-    fecha_inicio = models.DateField(null=True, blank=True)  # Nuevo campo 'fecha_inicio'
-    especialista_uare = models.CharField(max_length=100, blank=True, null=True)  # Nuevo campo 'especialista_uare'
-    acotaciones_adicionales = models.TextField(blank=True, null=True)  # Nuevo campo 'acotaciones_adicionales'
-    creado_en = models.DateTimeField(auto_now_add=True)  # Fecha de creación automática
+    id = models.IntegerField(primary_key=True)
+    nomenclatura = models.CharField(max_length=100, unique=True, null=True, blank=True)
+    nombre = models.CharField(max_length=100, unique=True, null=True, blank=True)
+    descripcion = models.TextField(null=True, blank=True)
+    moneda = models.IntegerField(default=1)
+    cambio = models.DecimalField(max_digits=10, decimal_places=4, default=1.0000)
+    estimado = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    expediente = models.IntegerField(null=True, blank=True)
+    periodo = models.IntegerField(default=10)
+    convocatoria = models.IntegerField(default=1)
+    convocado = models.IntegerField(default=10)
+    derivado = models.IntegerField(null=True, blank=True)
 
     def __str__(self):
-        return f"{self.numero} - {self.nombre}"
+        return self.nombre or ''
+
+    class Meta:
+        verbose_name = "Proceso"
+        verbose_name_plural = "Procesos"
 
 class Evento(models.Model):
     proceso = models.ForeignKey(Proceso, on_delete=models.CASCADE, related_name='eventos')  # Relación con Proceso
     actividad = models.CharField(max_length=100, blank=True, null=True)  # Campo de texto corto
     documento = models.CharField(max_length=100, blank=True, null=True)  # Campo de texto corto
-    fecha = models.DateField()  # Campo de tipo fecha
+    fecha = models.DateField(default=timezone.now)  # Usa la fecha actual como valor por defecto
     situacion = models.TextField(blank=True, null=True)  # Campo de texto largo
     importe = models.DecimalField(max_digits=10, decimal_places=2, default=0)  # Campo numérico con 2 decimales, por defecto 0
-    acti = models.IntegerField()  # Agregamos un valor por defecto de 0
+    acti = models.IntegerField(null=True, blank=True)
 
     def __str__(self):
-        return f"{self.actividad} - {self.proceso.nombre}"
+        return f"{self.actividad or ''} - {self.proceso.nombre or ''}"
 
 class Parametro(models.Model):
     id = models.AutoField(primary_key=True)
@@ -47,10 +49,10 @@ class Parametro(models.Model):
         unique_together = ['tipo', 'nombre']
 
 class Formula(models.Model):
-    parametro = models.ForeignKey(Parametro, on_delete=models.CASCADE, related_name='formulas')
+    parametro = models.ForeignKey(Parametro, on_delete=models.CASCADE, related_name='formulas', null=True, blank=True)
     nombre = models.CharField(max_length=100)
     descripcion = models.TextField(blank=True, null=True)
-    orden = models.IntegerField()
+    orden = models.IntegerField(default=0)  # O cualquier otro valor por defecto que tenga sentido para tu aplicación
     obs = models.CharField(max_length=255, blank=True, null=True)
     cantidad = models.IntegerField(null=True, blank=True)
     numero = models.IntegerField(null=True, blank=True)
@@ -59,7 +61,7 @@ class Formula(models.Model):
     respon2 = models.CharField(max_length=100, blank=True, null=True)
 
     def __str__(self):
-        return f"{self.parametro.nombre} - {self.nombre}"
+        return f"{self.parametro.nombre if self.parametro else ''} - {self.nombre}"
 
     class Meta:
         verbose_name = "Fórmula"

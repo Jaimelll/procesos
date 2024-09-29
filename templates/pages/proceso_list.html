@@ -13,24 +13,22 @@
                 <table class="table table-striped">
                     <thead>
                         <tr>
-                            <th>Número</th>
-                            <th>Dirección</th>
+                            <th>Nomenclatura</th>
                             <th>Nombre</th>
-                            <th>Previsto</th>
+                            <th>Estimado</th>
                             <th class="text-right">Acciones</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for proceso in page_obj %}
                         <tr>
-                            <td>{{ proceso.numero }}</td>
-                            <td>{{ proceso.direccion }}</td>
+                            <td>{{ proceso.nomenclatura }}</td>
                             <td>
                                 <a href="{% url 'evento_list' proceso_id=proceso.id %}">
                                     {{ proceso.nombre }}
                                 </a>
                             </td>
-                            <td>{{ proceso.previsto|floatformat:2|intcomma }}</td>
+                            <td>{{ proceso.estimado|floatformat:2|intcomma }}</td>
                             <td class="text-right">
                                 <div class="btn-group" role="group">
                                     <a href="{% url 'proceso_detail' proceso.pk %}" class="btn btn-info btn-sm">Ver</a>
@@ -89,16 +87,14 @@
                 <div class="card-body">
                     <h4 class="card-title mb-3">Filtrar Procesos</h4>
                     <form method="get">
-                        {{ form.numero.label_tag }}
-                        {{ form.numero }}
-                        {{ form.direccion.label_tag }}
-                        {{ form.direccion }}
+                        {{ form.nomenclatura.label_tag }}
+                        {{ form.nomenclatura }}
                         {{ form.nombre.label_tag }}
                         {{ form.nombre }}
-                        {{ form.previsto.label_tag }}
-                        {{ form.previsto }}
-                        {{ form.previsto_condition.label_tag }}
-                        {{ form.previsto_condition }}
+                        {{ form.estimado.label_tag }}
+                        {{ form.estimado }}
+                        {{ form.estimado_condition.label_tag }}
+                        {{ form.estimado_condition }}
                         <button type="submit" class="btn btn-primary w-100">Filtrar</button>
                     </form>
                 </div>

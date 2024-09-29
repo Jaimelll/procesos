@@ -14,8 +14,8 @@
             <td>{{ proceso.id }}</td>
         </tr>
         <tr>
-            <th>Número</th>
-            <td>{{ proceso.numero }}</td>
+            <th>Nomenclatura</th>
+            <td>{{ proceso.nomenclatura }}</td>
         </tr>
         <tr>
             <th>Nombre</th>
@@ -26,48 +26,36 @@
             <td>{{ proceso.descripcion }}</td>
         </tr>
         <tr>
-            <th>Previsto</th>
-            <td>{{ proceso.previsto|floatformat:2|intcomma }}</td>
+            <th>Moneda</th>
+            <td>{{ proceso.moneda }}</td>
+        </tr>
+        <tr>
+            <th>Cambio</th>
+            <td>{{ proceso.cambio }}</td>
         </tr>
         <tr>
             <th>Estimado</th>
             <td>{{ proceso.estimado|floatformat:2|intcomma }}</td>
         </tr>
         <tr>
-            <th>Estado</th>
-            <td>{{ proceso.estado }}</td>
+            <th>Expediente</th>
+            <td>{{ proceso.expediente }}</td>
         </tr>
         <tr>
-            <th>Fecha de Inicio</th>
-            <td>{{ proceso.fecha_inicio }}</td>
+            <th>Periodo</th>
+            <td>{{ proceso.periodo }}</td>
         </tr>
         <tr>
-            <th>Especialista UARE</th>
-            <td>{{ proceso.especialista_uare }}</td>
+            <th>Convocatoria</th>
+            <td>{{ proceso.convocatoria }}</td>
         </tr>
         <tr>
-            <th>Acotaciones Adicionales</th>
-            <td>{{ proceso.acotaciones_adicionales }}</td>
+            <th>Convocado</th>
+            <td>{{ proceso.convocado }}</td>
         </tr>
         <tr>
-            <th>Dirección</th>
-            <td>{{ proceso.direccion }}</td>
-        </tr>
-        <tr>
-            <th>Grupo</th>
-            <td>{{ proceso.grupo }}</td>
-        </tr>
-        <tr>
-            <th>Obtención</th>
-            <td>{{ proceso.obtencion }}</td>
-        </tr>
-        <tr>
-            <th>Cantidad de Ítems</th>
-            <td>{{ proceso.cant_items }}</td>
-        </tr>
-        <tr>
-            <th>Cantidad de Unidades</th>
-            <td>{{ proceso.cant_unidades }}</td>
+            <th>Derivado</th>
+            <td>{{ proceso.derivado }}</td>
         </tr>
     </table>
     <!-- Botones de acciones -->

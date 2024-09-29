@@ -6,12 +6,7 @@ from django.contrib.auth.models import User
 class ProcesoForm(forms.ModelForm):
     class Meta:
         model = Proceso
-        # Asegúrate de incluir todos los campos del modelo Proceso
-        fields = [
-            'numero', 'nombre', 'descripcion', 'previsto', 'estimado', 'estado', 'fecha_inicio',
-            'especialista_uare', 'acotaciones_adicionales', 'direccion', 'grupo', 'obtencion',
-            'cant_items', 'cant_unidades'
-        ]
+        fields = ['nomenclatura', 'nombre', 'descripcion', 'moneda', 'cambio', 'estimado', 'expediente', 'periodo', 'convocatoria', 'convocado', 'derivado']
 
 class EventoForm(forms.ModelForm):
     acti = forms.ChoiceField(label="Actividad (Fórmula)")
@@ -40,25 +35,12 @@ class CustomUserCreationForm(UserCreationForm):
         fields = ('username', 'email', 'password1', 'password2')
 
 class ProcesoFilterForm(forms.Form):
-    numero = forms.IntegerField(
-        required=False, 
-        label='Número', 
-        widget=forms.TextInput(attrs={'placeholder': 'Ingrese número'})  # Cambiar a TextInput para permitir entrada manual
-    )
-    nombre = forms.CharField(required=False, label='Nombre', max_length=100)
-    
-    direccion = forms.CharField(required=False, label='Dirección', max_length=50)
-    
-    previsto = forms.DecimalField(
-        required=False, 
-        label='Previsto', 
-        widget=forms.TextInput(attrs={'placeholder': 'Ingrese monto previsto'})  # Cambiar a TextInput para el campo de monto
-    )
-    previsto_condition = forms.ChoiceField(
-        required=False,
-        label='Condición Previsto',
-        choices=[('lt', 'Menor que'), ('gt', 'Mayor que')],
-        widget=forms.Select()
+    nomenclatura = forms.CharField(required=False)
+    nombre = forms.CharField(required=False)
+    estimado = forms.DecimalField(required=False)
+    estimado_condition = forms.ChoiceField(
+        choices=[('gt', 'Mayor que'), ('lt', 'Menor que'), ('eq', 'Igual a')],
+        required=False
     )
 
 class ParametroForm(forms.ModelForm):

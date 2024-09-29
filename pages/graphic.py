@@ -47,7 +47,7 @@ def generate_graphic(procesos, eventos, colors, activities, max_label_length):
                     phase_start_dates.append(phase_start_dates[-1] if phase_start_dates else start_of_year)
                     phase_durations.append(0)
 
-            proceso_label = f"{proceso.numero} - {proceso.nombre[:max_label_length]}{'...' if len(proceso.nombre) > max_label_length else ''}"
+            proceso_label = f"{proceso.nombre} - {proceso.descripcion[:max_label_length]}{'...' if len(proceso.nombre) > max_label_length else ''}"
 
             ax.barh(
                 proceso_label, 
