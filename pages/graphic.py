@@ -3,15 +3,20 @@ import matplotlib.dates as mdates
 import io
 import base64
 from datetime import datetime, date
+from django.db.models import OuterRef, Subquery
+from .models import Formula, Evento
 
 def generate_graphic(procesos, eventos, colors, activities, max_label_length, mercado_seleccionado='Nacional'):
     # Tamaño del gráfico ajustado
     fig, ax = plt.subplots(figsize=(32, 16))  # Ancho 32, altura 16
 
-    start_of_year = date(datetime.now().year, 1, 1)
     today_date = date.today()
 
-    phases = ['Requerimiento', 'Indagación de Mercado', 'Convocatoria', 'Firma de contrato', 'Entrega del bien']
+    # Obtener los estados (leyendas) de la tabla Formula
+    estados = Formula.objects.filter(parametro_id=29).values_list('nombre', flat=True)
+    
+    # Crear un diccionario de colores para los estados
+    color_map = {estado: colors.get(estado, plt.cm.Set3(i/len(estados))) for i, estado in enumerate(estados)}
 
     # Separar procesos por mercado
     procesos_por_mercado = {"Nacional": [], "Extranjero": []}
@@ -23,42 +28,32 @@ def generate_graphic(procesos, eventos, colors, activities, max_label_length, me
     for proceso in procesos_por_mercado[mercado_seleccionado]:
         evento_proceso = eventos.filter(proceso=proceso).order_by('fecha')
         if evento_proceso.exists():
-            phase_start_dates = []
-            phase_durations = []
+            estado_dates = []
+            estado_durations = []
+            current_estado = None
 
-            start_date = evento_proceso.filter(actividad=activities[0]).first().fecha if evento_proceso.filter(actividad=activities[0]).exists() else start_of_year
+            for evento in evento_proceso:
+                formula = Formula.objects.filter(parametro_id=29, cantidad=evento.acti).first()
+                if formula:
+                    estado = formula.nombre
+                    if estado != current_estado:
+                        if current_estado is not None:
+                            estado_durations.append((evento.fecha - estado_dates[-1]).days)
+                        estado_dates.append(evento.fecha)
+                        current_estado = estado
 
-            for i in range(len(phases)):
-                current_activity = activities[i]
-                next_activity = activities[i + 1] if i + 1 < len(activities) else None
-                
-                phase_event = evento_proceso.filter(actividad=current_activity).first()
-                
-                if phase_event:
-                    phase_start = phase_event.fecha
-                    phase_start_dates.append(phase_start)
-
-                    if next_activity:
-                        next_phase_event = evento_proceso.filter(actividad=next_activity).first()
-                        if next_phase_event:
-                            phase_durations.append((next_phase_event.fecha - phase_event.fecha).days)
-                        else:
-                            next_available_event = evento_proceso.filter(actividad__in=activities[i+1:]).first()
-                            if next_available_event:
-                                phase_durations.append((next_available_event.fecha - phase_event.fecha).days)
-                            else:
-                                phase_durations.append(5)
-                    else:
-                        phase_start_dates.append(phase_start_dates[-1] if phase_start_dates else start_of_year)
-                        phase_durations.append(0)
+            # Añadir la duración del último estado hasta el último evento
+            if estado_dates:
+                ultimo_evento = evento_proceso.last()
+                estado_durations.append((ultimo_evento.fecha - estado_dates[-1]).days)
 
             proceso_label = f"{proceso.nombre} - {proceso.descripcion[:max_label_length]}{'...' if len(proceso.descripcion) > max_label_length else ''}"
 
             ax.barh(
                 proceso_label, 
-                phase_durations, 
-                left=mdates.date2num(phase_start_dates),
-                color=[colors.get(phase, 'grey') for phase in phases]
+                estado_durations, 
+                left=mdates.date2num(estado_dates),
+                color=[color_map.get(Formula.objects.filter(parametro_id=29, cantidad=e.acti).first().nombre, 'grey') if Formula.objects.filter(parametro_id=29, cantidad=e.acti).first() else 'grey' for e in evento_proceso]
             )
 
     ax.xaxis.set_major_locator(mdates.MonthLocator())
@@ -80,15 +75,15 @@ def generate_graphic(procesos, eventos, colors, activities, max_label_length, me
     plt.xticks(rotation=45, fontsize=24)  # Tamaño de las etiquetas de fecha
     ax.set_xlabel('Fecha', fontsize=32)  # Tamaño del texto del eje x (32)
 
-    # Aumentar el tamaño de los elementos en la leyenda y hacer más gruesos los colores
+    # Crear la leyenda con los estados de Formula
+    handles = [plt.Rectangle((0,0),1,1, color=color_map[estado]) for estado in estados]
     ax.legend(
-        handles=[plt.Line2D([0], [0], color=color, lw=12) for phase, color in colors.items()] + 
-               [plt.Line2D([0], [0], color='red', lw=12)],  # Hacer las líneas de colores más gruesas (12)
-        labels=list(colors.keys()) + ['Fecha Actual'],
+        handles=handles + [plt.Line2D([0], [0], color='red', lw=12)],
+        labels=list(estados) + ['Fecha Actual'],
         loc='lower center',
-        bbox_to_anchor=(0.5, -0.35),  # Mover la leyenda más abajo
-        ncol=len(colors) + 1,
-        fontsize=30  # Tamaño de la fuente de la leyenda (30)
+        bbox_to_anchor=(0.5, -0.35),
+        ncol=len(estados) + 1,
+        fontsize=30
     )
 
     # Guardar el gráfico en un buffer
