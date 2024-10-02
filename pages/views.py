@@ -15,7 +15,7 @@ import io
 import base64
 
 # Importar los gráficos desde los archivos separados
-from .graphic import generate_graphic
+from .graphic import generate_graphic, get_market_buttons
 from .graphic2 import generate_pie_chart
 
 # Manejo del locale de manera segura
@@ -26,8 +26,17 @@ except locale.Error:
 
 @login_required
 def home_view(request):
+    mercados = get_market_buttons()
+    mercado_seleccionado = request.GET.get('mercado', 'Nacional')
+    
     procesos = Proceso.objects.all()
     eventos = Evento.objects.filter(proceso__in=procesos).order_by('fecha')
+
+    # Filtrar procesos por mercado seleccionado
+    if mercado_seleccionado == 'Extranjero':
+        procesos = procesos.filter(nombre__startswith='RE')
+    else:
+        procesos = procesos.exclude(nombre__startswith='RE')
 
     # Colores y actividades definidos para el gráfico de líneas de tiempo
     colors = {
@@ -48,7 +57,7 @@ def home_view(request):
     max_label_length = len("AUDÍFONOS CON MICRÓFONO PARA LOS")
 
     # Generar el primer gráfico
-    graphic = generate_graphic(procesos, eventos, colors, activities, max_label_length)
+    graphic = generate_graphic(procesos, eventos, colors, activities, max_label_length, mercado_seleccionado)
 
     # Generar el gráfico de torta
     procesos_por_nombre = Proceso.objects.values('nombre').annotate(total_procesos=Count('id'), total_estimado=Sum('estimado'))
@@ -58,6 +67,8 @@ def home_view(request):
         'graphic': graphic,
         'graphic2': graphic2,
         'procesos': procesos,
+        'mercados': mercados,
+        'mercado_seleccionado': mercado_seleccionado,
     }
     return render(request, 'home.html', context)
 

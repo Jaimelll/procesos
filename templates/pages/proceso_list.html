@@ -13,7 +13,6 @@
                 <table class="table table-striped">
                     <thead>
                         <tr>
-                            <th>Nomenclatura</th>
                             <th>Nombre</th>
                             <th>Estimado</th>
                             <th class="text-right">Acciones</th>
@@ -22,7 +21,6 @@
                     <tbody>
                         {% for proceso in page_obj %}
                         <tr>
-                            <td>{{ proceso.nomenclatura }}</td>
                             <td>
                                 <a href="{% url 'evento_list' proceso_id=proceso.id %}">
                                     {{ proceso.nombre }}
@@ -87,8 +85,6 @@
                 <div class="card-body">
                     <h4 class="card-title mb-3">Filtrar Procesos</h4>
                     <form method="get">
-                        {{ form.nomenclatura.label_tag }}
-                        {{ form.nomenclatura }}
                         {{ form.nombre.label_tag }}
                         {{ form.nombre }}
                         {{ form.estimado.label_tag }}

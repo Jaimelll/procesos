@@ -12,24 +12,18 @@
     <table class="table table-striped">
         <thead>
             <tr>
-                <th>Actividad</th>
-                <th>Documento</th>
-                <th>Fecha</th>
-                <th>Situación</th>
-                <th>Importe</th>
                 <th>Actividad (Fórmula)</th>
+                <th>Actividad</th>
+                <th>Fecha</th>
                 <th>Acciones</th>
             </tr>
         </thead>
         <tbody>
             {% for evento in eventos %}
             <tr>
-                <td>{{ evento.actividad }}</td>
-                <td>{{ evento.documento }}</td>
-                <td>{{ evento.fecha }}</td>
-                <td>{{ evento.situacion }}</td>
-                <td>{{ evento.importe }}</td>
                 <td>{{ evento.acti_nombre }}</td>
+                <td>{{ evento.actividad }}</td>
+                <td>{{ evento.fecha }}</td>
                 <td>
                     <a href="{% url 'evento_detail' proceso.id evento.id %}" class="btn btn-info btn-sm">Ver</a>
                     <a href="{% url 'evento_update' proceso.id evento.id %}" class="btn btn-warning btn-sm">Editar</a>

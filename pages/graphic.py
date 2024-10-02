@@ -4,7 +4,7 @@ import io
 import base64
 from datetime import datetime, date
 
-def generate_graphic(procesos, eventos, colors, activities, max_label_length):
+def generate_graphic(procesos, eventos, colors, activities, max_label_length, mercado_seleccionado='Nacional'):
     # Tamaño del gráfico ajustado
     fig, ax = plt.subplots(figsize=(32, 16))  # Ancho 32, altura 16
 
@@ -13,7 +13,14 @@ def generate_graphic(procesos, eventos, colors, activities, max_label_length):
 
     phases = ['Requerimiento', 'Indagación de Mercado', 'Convocatoria', 'Firma de contrato', 'Entrega del bien']
 
+    # Separar procesos por mercado
+    procesos_por_mercado = {"Nacional": [], "Extranjero": []}
     for proceso in procesos:
+        mercado = "Extranjero" if proceso.nombre.startswith("RE") else "Nacional"
+        procesos_por_mercado[mercado].append(proceso)
+
+    # Procesar solo el mercado seleccionado
+    for proceso in procesos_por_mercado[mercado_seleccionado]:
         evento_proceso = eventos.filter(proceso=proceso).order_by('fecha')
         if evento_proceso.exists():
             phase_start_dates = []
@@ -42,12 +49,10 @@ def generate_graphic(procesos, eventos, colors, activities, max_label_length):
                             else:
                                 phase_durations.append(5)
                     else:
-                        phase_durations.append(5)
-                else:
-                    phase_start_dates.append(phase_start_dates[-1] if phase_start_dates else start_of_year)
-                    phase_durations.append(0)
+                        phase_start_dates.append(phase_start_dates[-1] if phase_start_dates else start_of_year)
+                        phase_durations.append(0)
 
-            proceso_label = f"{proceso.nombre} - {proceso.descripcion[:max_label_length]}{'...' if len(proceso.nombre) > max_label_length else ''}"
+            proceso_label = f"{proceso.nombre} - {proceso.descripcion[:max_label_length]}{'...' if len(proceso.descripcion) > max_label_length else ''}"
 
             ax.barh(
                 proceso_label, 
@@ -94,3 +99,7 @@ def generate_graphic(procesos, eventos, colors, activities, max_label_length):
     buffer.close()
 
     return base64.b64encode(image_png).decode('utf-8')
+
+# Función para obtener los botones de mercado
+def get_market_buttons():
+    return ['Nacional', 'Extranjero']
