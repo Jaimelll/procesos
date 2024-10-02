@@ -22,6 +22,22 @@ class Proceso(models.Model):
         verbose_name = "Proceso"
         verbose_name_plural = "Procesos"
 
+    def get_estado(self):
+        ultimo_evento = self.eventos.order_by('-fecha', '-id').first()
+        if ultimo_evento:
+            formula_estado = Formula.objects.filter(parametro_id=29, cantidad=ultimo_evento.acti).first()
+            if formula_estado:
+                return formula_estado.nombre
+        return "Sin estado"
+
+    def get_orden_estado(self):
+        ultimo_evento = self.eventos.order_by('-fecha', '-id').first()
+        if ultimo_evento:
+            formula_orden = Formula.objects.filter(parametro_id=12, descripcion=ultimo_evento.acti).first()
+            if formula_orden:
+                return formula_orden.orden
+        return 0
+
 class Evento(models.Model):
     proceso = models.ForeignKey(Proceso, on_delete=models.CASCADE, related_name='eventos')  # Relación con Proceso
     actividad = models.CharField(max_length=100, blank=True, null=True)  # Campo de texto corto

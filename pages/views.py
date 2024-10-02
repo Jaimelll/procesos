@@ -5,7 +5,8 @@ from .models import Proceso, Evento, Parametro, Formula
 from .forms import ProcesoForm, CustomUserCreationForm, ProcesoFilterForm, EventoForm, ParametroForm, ParametroFilterForm, FormulaForm
 from django.urls import reverse_lazy
 from django.views.generic import CreateView
-from django.db.models import Count, Sum
+from django.db.models import Count, Sum, F, Value, IntegerField, OuterRef, Subquery
+from django.db.models.functions import Coalesce
 from datetime import datetime, date
 import locale
 from django.core.paginator import Paginator
@@ -13,6 +14,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import io
 import base64
+from django.utils import timezone
 
 # Importar los gráficos desde los archivos separados
 from .graphic import generate_graphic, get_market_buttons
@@ -75,7 +77,38 @@ def home_view(request):
 @login_required
 def proceso_list(request):
     form = ProcesoFilterForm(request.GET)
-    procesos = Proceso.objects.all()
+    
+    # Obtener la fecha actual
+    fecha_actual = timezone.now().date()
+    
+    # Subconsulta para obtener el último evento de cada proceso con fecha menor o igual a hoy
+    ultimo_evento = Evento.objects.filter(
+        proceso=OuterRef('pk'),
+        fecha__lte=fecha_actual
+    ).order_by('-fecha', '-id')
+
+    # Subconsulta para obtener la fórmula correspondiente al último evento
+    formula_estado = Formula.objects.filter(
+        parametro_id=29,
+        cantidad=OuterRef('ultimo_evento_acti')
+    ).values('nombre')[:1]
+
+    procesos = Proceso.objects.annotate(
+        ultimo_evento_acti=Subquery(ultimo_evento.values('acti')[:1]),
+        estado=Subquery(formula_estado),
+        orden_estado=Coalesce(
+            Subquery(
+                Formula.objects.filter(
+                    parametro_id=12,
+                    cantidad=OuterRef('ultimo_evento_acti')
+                ).values('orden')[:1]
+            ),
+            Value(0, output_field=IntegerField())
+        )
+    )
+
+    # Filtrar procesos que tienen eventos hasta el día actual
+    procesos = procesos.filter(eventos__fecha__lte=fecha_actual).distinct()
 
     if form.is_valid():
         if form.cleaned_data['nomenclatura']:
@@ -95,8 +128,8 @@ def proceso_list(request):
     page_obj = paginator.get_page(page_number)
 
     context = {
+        'page_obj': page_obj,
         'form': form,
-        'page_obj': page_obj
     }
     return render(request, 'pages/proceso_list.html', context)
 

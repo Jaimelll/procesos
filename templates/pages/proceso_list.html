@@ -15,6 +15,7 @@
                         <tr>
                             <th>Nombre</th>
                             <th>Estimado</th>
+                            <th>Estado</th>
                             <th class="text-right">Acciones</th>
                         </tr>
                     </thead>
@@ -27,6 +28,7 @@
                                 </a>
                             </td>
                             <td>{{ proceso.estimado|floatformat:2|intcomma }}</td>
+                            <td>{{ proceso.estado }}</td>
                             <td class="text-right">
                                 <div class="btn-group" role="group">
                                     <a href="{% url 'proceso_detail' proceso.pk %}" class="btn btn-info btn-sm">Ver</a>
