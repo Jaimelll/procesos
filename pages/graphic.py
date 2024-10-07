@@ -14,24 +14,19 @@ def generate_graphic(procesos, eventos, colors, activities, max_label_length, me
 
     # Obtener los estados (leyendas) de la tabla Formula, ordenados por el campo 'orden'
     formulas = list(Formula.objects.filter(parametro_id=50).order_by('orden'))
-    estados = [formula.nombre for formula in formulas]
     
-    # Definir una lista de colores distintivos
+    # Definir una lista de colores distintivos (asegúrate de que haya al menos 13)
     colores_distintivos = [
-        '#FFD700', '#FF4500', '#32CD32', '#1E90FF', '#FF1493', 
-        '#9400D3', '#FF0000', '#FF8C00', '#00FF00', '#8B4513', 
-        '#4169E1', '#FF69B4', '#20B2AA', '#DAA520', '#800080',
+        '#FF4500', '#FFD700', '#32CD32', '#1E90FF', '#FFD700', 
+        '#9400D3', '#FF8C00', '#FF0000', '#00FF00', '#8B4513', 
+        '#4169E1', '#FF69B4', '#20B2AA'
     ]
 
-    # Asegurarse de que hay suficientes colores
-    while len(colores_distintivos) < len(estados):
-        colores_distintivos.extend(colores_distintivos)
-    
     # Crear el mapa de colores
     color_map = {formula.cantidad: colores_distintivos[i] for i, formula in enumerate(formulas)}
 
     # Obtener los acti válidos de la tabla Formula
-    acti_validos = Formula.objects.filter(parametro_id=50).values_list('cantidad', flat=True)
+    acti_validos = set(formula.cantidad for formula in formulas)
 
     # Separar procesos por mercado y ordenar por nombre
     procesos_por_mercado = {"Nacional": [], "Extranjero": []}
@@ -58,7 +53,7 @@ def generate_graphic(procesos, eventos, colors, activities, max_label_length, me
             estado_durations = []
             estado_colors = []
             current_estado = None
-            next_color = 'grey'  # Color inicial
+            current_color = 'grey'  # Color inicial
 
             for i, evento in enumerate(evento_proceso):
                 formula = Formula.objects.filter(parametro_id=50, cantidad=evento.acti).first()
@@ -67,18 +62,23 @@ def generate_graphic(procesos, eventos, colors, activities, max_label_length, me
                     if estado != current_estado:
                         if current_estado is not None:
                             estado_durations.append((evento.fecha - estado_dates[-1]).days)
-                            estado_colors.append(next_color)
+                            estado_colors.append(current_color)
                         estado_dates.append(evento.fecha)
                         current_estado = estado
                     
-                    # Actualizar el color para el próximo estado
-                    next_color = color_map_proceso.get(evento.acti, 'grey')
+                    # Actualizar el color con el del próximo evento (si existe)
+                    if i + 1 < len(evento_proceso):
+                        next_evento = evento_proceso[i + 1]
+                        current_color = color_map_proceso.get(next_evento.acti, 'grey')
+                    else:
+                        # Para el último evento, usar su propio color
+                        current_color = color_map_proceso.get(evento.acti, 'grey')
 
             # Añadir la duración y color del último estado hasta el último evento
             if estado_dates:
                 ultimo_evento = evento_proceso.last()
                 estado_durations.append((ultimo_evento.fecha - estado_dates[-1]).days)
-                estado_colors.append(next_color)
+                estado_colors.append(current_color)
 
             proceso_label = f"{proceso.nombre} - {proceso.descripcion[:max_label_length]}{'...' if len(proceso.descripcion) > max_label_length else ''}"
             proceso_labels.append(proceso_label)
@@ -109,65 +109,57 @@ def generate_graphic(procesos, eventos, colors, activities, max_label_length, me
         ax.axvline(x=date(datetime.now().year, month, 1), color='grey', linestyle='--', linewidth=0.5)
 
     # Asegurar que la línea vertical roja de "Hoy" sea visible
-    ax.axvline(x=today_date, color='red', linestyle='-', linewidth=2, label='Fecha Actual')
+    linea_hoy = ax.axvline(x=today_date, color='red', linestyle='-', linewidth=2, label='Fecha Actual')
+
+    # Añadir la leyenda para la línea de "Fecha Actual" primero
+    legend_hoy = ax.legend([linea_hoy], ['Fecha Actual'], 
+              loc='lower center', 
+              bbox_to_anchor=(0.5, -0.22),  # Posición ajustada, ahora más arriba
+              ncol=1, 
+              fontsize=30,
+              handlelength=1.5, 
+              handleheight=1.5)
+
+    # Crear la leyenda con todos los estados de Formula, ordenados por el campo 'orden', excluyendo el primero
+    handles = [plt.Rectangle((0,0),1,1, color=color_map[formula.cantidad]) for formula in formulas[1:]]
+    etiquetas_leyenda = [formula.nombre for formula in formulas[1:]]
+    
+    # Dividir los handles y etiquetas en dos filas
+    handles_fila1 = handles[:6]
+    handles_fila2 = handles[6:]
+    etiquetas_fila1 = etiquetas_leyenda[:6]
+    etiquetas_fila2 = etiquetas_leyenda[6:]
+
+    # Crear la leyenda en dos filas
+    ax.add_artist(legend_hoy)  # Añadir la leyenda de "Fecha Actual" al gráfico
+    legend1 = ax.legend(handles_fila1, etiquetas_fila1, 
+              loc='lower center', 
+              bbox_to_anchor=(0.5, -0.30),  # Ajustamos la posición vertical
+              ncol=6, 
+              fontsize=30,
+              columnspacing=1, 
+              handlelength=1.5, 
+              handleheight=1.5)
+    
+    # Añadir la segunda fila de la leyenda
+    ax.add_artist(legend1)
+    legend2 = ax.legend(handles_fila2, etiquetas_fila2, 
+              loc='lower center', 
+              bbox_to_anchor=(0.5, -0.38),  # Ajustamos la posición vertical
+              ncol=6, 
+              fontsize=30,
+              columnspacing=1, 
+              handlelength=1.5, 
+              handleheight=1.5)
+
+    # Ajustar los márgenes para maximizar el espacio del gráfico y dar espacio a todas las leyendas
+    plt.subplots_adjust(left=0.35, right=0.95, top=0.95, bottom=0.40)  # Ajustamos el margen inferior
+
+    # Asegurarse de que la etiqueta del eje x esté visible
+    ax.set_xlabel('Fecha', fontsize=32, labelpad=90)  # Ajustamos el labelpad para subir la etiqueta del eje x
 
     plt.xticks(rotation=45, fontsize=24)  # Tamaño de las etiquetas de fecha
     ax.set_xlabel('Fecha', fontsize=32)  # Tamaño del texto del eje x (32)
-
-    # Crear la leyenda con los estados de Formula, omitiendo el último y desplazando los nombres
-    handles = [plt.Rectangle((0,0),1,1, color=color_map[formula.cantidad]) for formula in formulas[:-1]]
-    etiquetas_leyenda = [formulas[i+1].nombre for i in range(len(formulas)-1)]
-    
-    # Calcular el número de columnas para la primera fila
-    num_cols_first_row = (len(handles) + 1) // 2
-    
-    # Crear la leyenda para 'Fecha Actual' por encima de las otras
-    legend_fecha_actual = ax.legend(
-        handles=[plt.Line2D([0], [0], color='red', lw=2)],
-        labels=['Fecha Actual'],
-        loc='lower center',
-        bbox_to_anchor=(0.7, -0.17),  # Ajustado para estar más abajo
-        ncol=1,
-        fontsize=24,
-        columnspacing=1,
-        handlelength=1.5,
-        handleheight=1.5
-    )
-    ax.add_artist(legend_fecha_actual)
-
-    # Crear dos filas de leyendas para los estados
-    legend1 = ax.legend(
-        handles=handles[:num_cols_first_row],
-        labels=etiquetas_leyenda[:num_cols_first_row],
-        loc='lower center',
-        bbox_to_anchor=(0.5, -0.23),  # Ajustado para estar más abajo
-        ncol=num_cols_first_row,
-        fontsize=24,
-        columnspacing=1,
-        handlelength=1.5,
-        handleheight=1.5
-    )
-    
-    legend2 = ax.legend(
-        handles=handles[num_cols_first_row:],
-        labels=etiquetas_leyenda[num_cols_first_row:],
-        loc='lower center',
-        bbox_to_anchor=(0.5, -0.30),  # Ajustado para estar más abajo
-        ncol=len(handles) - num_cols_first_row,
-        fontsize=24,
-        columnspacing=1,
-        handlelength=1.5,
-        handleheight=1.5
-    )
-
-    ax.add_artist(legend1)
-    ax.add_artist(legend2)
-
-    # Ajustar los márgenes para maximizar el espacio del gráfico
-    plt.subplots_adjust(left=0.35, right=0.95, top=0.95, bottom=0.25)  # Ajustado bottom de 0.20 a 0.25
-
-    # Asegurarse de que la etiqueta del eje x esté visible
-    ax.set_xlabel('Fecha', fontsize=32, labelpad=15)  # Aumentado labelpad de 10 a 15
 
     # Guardar el gráfico en un buffer
     buffer = io.BytesIO()
@@ -175,6 +167,28 @@ def generate_graphic(procesos, eventos, colors, activities, max_label_length, me
     buffer.seek(0)
     image_png = buffer.getvalue()
     buffer.close()
+
+    # Añadir una comprobación de colores utilizados
+    colores_utilizados = set()
+    for proceso in procesos_ordenados:
+        evento_proceso = eventos.filter(proceso=proceso, acti__in=acti_validos)
+        for evento in evento_proceso:
+            color = color_map.get(evento.acti)
+            if color:
+                colores_utilizados.add(color)
+    
+    print("Colores utilizados en el gráfico:")
+    for color in colores_utilizados:
+        print(color)
+
+    # Identificar colores que no deberían estar
+    colores_no_esperados = colores_utilizados - set(color_map.values())
+    if colores_no_esperados:
+        print("Colores no esperados encontrados:")
+        for color in colores_no_esperados:
+            print(color)
+    else:
+        print("No se encontraron colores inesperados.")
 
     return base64.b64encode(image_png).decode('utf-8')
 
