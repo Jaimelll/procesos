@@ -6,7 +6,7 @@ from datetime import datetime, date
 from django.db.models import OuterRef, Subquery
 from .models import Formula, Evento
 
-def generate_graphic(procesos, eventos, colors, activities, max_label_length, mercado_seleccionado='Nacional'):
+def generate_graphic(procesos, eventos, mercado_seleccionado, activities, max_label_length):
     # Tamaño del gráfico ajustado para maximizar la altura
     fig, ax = plt.subplots(figsize=(32, 18))  # Aumentado la altura de 16 a 18
 
@@ -156,7 +156,7 @@ def generate_graphic(procesos, eventos, colors, activities, max_label_length, me
     plt.subplots_adjust(left=0.35, right=0.95, top=0.95, bottom=0.40)  # Ajustamos el margen inferior
 
     # Asegurarse de que la etiqueta del eje x esté visible
-    ax.set_xlabel('Fecha', fontsize=32, labelpad=90)  # Ajustamos el labelpad para subir la etiqueta del eje x
+    #  ax.set_xlabel('Fecha', fontsize=32, labelpad=90)  # Ajustamos el labelpad para subir la etiqueta del eje x
 
     plt.xticks(rotation=45, fontsize=24)  # Tamaño de las etiquetas de fecha
     ax.set_xlabel('Fecha', fontsize=32)  # Tamaño del texto del eje x (32)

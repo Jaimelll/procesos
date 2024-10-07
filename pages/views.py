@@ -7,24 +7,10 @@ from django.urls import reverse_lazy
 from django.views.generic import CreateView
 from django.db.models import Count, Sum, F, Value, IntegerField, OuterRef, Subquery
 from django.db.models.functions import Coalesce
-from datetime import datetime, date
-import locale
 from django.core.paginator import Paginator
-import pandas as pd
-import matplotlib.pyplot as plt
-import io
-import base64
 from django.utils import timezone
-
-# Importar los gráficos desde los archivos separados
 from .graphic import generate_graphic, get_market_buttons
 from .graphic2 import generate_pie_chart
-
-# Manejo del locale de manera segura
-try:
-    locale.setlocale(locale.LC_ALL, 'es_PE.UTF-8')
-except locale.Error:
-    pass
 
 @login_required
 def home_view(request):
@@ -34,35 +20,23 @@ def home_view(request):
     procesos = Proceso.objects.all()
     eventos = Evento.objects.filter(proceso__in=procesos).order_by('fecha')
 
-    # Filtrar procesos por mercado seleccionado
     if mercado_seleccionado == 'Extranjero':
         procesos = procesos.filter(nombre__startswith='RE')
     else:
         procesos = procesos.exclude(nombre__startswith='RE')
 
-    # Colores y actividades definidos para el gráfico de líneas de tiempo
-    colors = {
-        'Requerimiento': 'skyblue',
-        'Indagación de Mercado': 'orange',
-        'Convocatoria': 'green',
-        'Firma de contrato': 'purple',
-        'Entrega del bien': 'red'
-    }
-    activities = [
-        'Fecha de Requerimiento',
-        'Indagación Mercado',
-        'Fecha de Convocatoria',
-        'Firma Estimada de Contrato',
-        'Ingreso Estimado Almacén',
-        'Fecha Estimada de Conformidad'
-    ]
-    max_label_length = len("AUDÍFONOS CON MICRÓFONO PARA LOS")
+    # Obtener las actividades (suponiendo que están relacionadas con los eventos)
+    activities = eventos.values_list('acti', flat=True).distinct()
 
-    # Generar el primer gráfico
-    graphic = generate_graphic(procesos, eventos, colors, activities, max_label_length, mercado_seleccionado)
+    # Definir una longitud máxima para las etiquetas (ajusta según tus necesidades)
+    max_label_length = 20
 
-    # Generar el gráfico de torta
-    procesos_por_nombre = Proceso.objects.values('nombre').annotate(total_procesos=Count('id'), total_estimado=Sum('estimado'))
+    graphic = generate_graphic(procesos, eventos, mercado_seleccionado, activities, max_label_length)
+    procesos_por_nombre = Proceso.objects.values('nombre').annotate(
+        total_procesos=Count('id'),
+        total_estimado=Sum('estimado')
+    )
+    print(f"Procesos por nombre: {list(procesos_por_nombre)}")  # Agregar esta línea para depuración
     graphic2 = generate_pie_chart(procesos_por_nombre)
 
     context = {
@@ -77,17 +51,13 @@ def home_view(request):
 @login_required
 def proceso_list(request):
     form = ProcesoFilterForm(request.GET)
-    
-    # Obtener la fecha actual
     fecha_actual = timezone.now().date()
     
-    # Subconsulta para obtener el último evento de cada proceso con fecha menor o igual a hoy
     ultimo_evento = Evento.objects.filter(
         proceso=OuterRef('pk'),
         fecha__lte=fecha_actual
     ).order_by('-fecha', '-id')
 
-    # Subconsulta para obtener la fórmula correspondiente al último evento
     formula_estado = Formula.objects.filter(
         parametro_id=29,
         cantidad=OuterRef('ultimo_evento_acti')
@@ -107,7 +77,6 @@ def proceso_list(request):
         )
     )
 
-    # Filtrar procesos que tienen eventos hasta el día actual
     procesos = procesos.filter(eventos__fecha__lte=fecha_actual).distinct()
 
     if form.is_valid():
@@ -175,7 +144,6 @@ class SignUpView(CreateView):
     success_url = reverse_lazy('login')
     template_name = 'registration/signup.html'
 
-# Vistas para Eventos
 @login_required
 def evento_list(request, proceso_id):
     proceso = get_object_or_404(Proceso, pk=proceso_id)
@@ -184,10 +152,7 @@ def evento_list(request, proceso_id):
     
     for evento in eventos:
         formula = formulas.filter(orden=evento.acti).first()
-        if formula:
-            evento.acti_nombre = formula.nombre
-        else:
-            evento.acti_nombre = "N/A"
+        evento.acti_nombre = formula.nombre if formula else "N/A"
     
     context = {
         'proceso': proceso,
@@ -200,11 +165,7 @@ def evento_detail(request, proceso_id, evento_id):
     proceso = get_object_or_404(Proceso, pk=proceso_id)
     evento = get_object_or_404(Evento, pk=evento_id, proceso=proceso)
     formula = Formula.objects.filter(parametro_id=12, orden=evento.acti).first()
-    
-    if formula:
-        evento.acti_nombre = formula.nombre
-    else:
-        evento.acti_nombre = "N/A"
+    evento.acti_nombre = formula.nombre if formula else "N/A"
     
     context = {
         'proceso': proceso,
@@ -215,10 +176,7 @@ def evento_detail(request, proceso_id, evento_id):
 @login_required
 def evento_create_update(request, proceso_id, evento_id=None):
     proceso = get_object_or_404(Proceso, pk=proceso_id)
-    if evento_id:
-        evento = get_object_or_404(Evento, pk=evento_id, proceso=proceso)
-    else:
-        evento = None
+    evento = get_object_or_404(Evento, pk=evento_id, proceso=proceso) if evento_id else None
 
     if request.method == 'POST':
         form = EventoForm(request.POST, instance=evento)
@@ -247,7 +205,6 @@ def evento_delete(request, proceso_id, pk):
     return render(request, 'pages/evento_confirm_delete.html', {'evento': evento, 'proceso': proceso})
 
 def about_view(request):
-    """Vista para la página 'About'."""
     return render(request, 'pages/about.html')
 
 @login_required
@@ -306,9 +263,6 @@ def parametro_delete(request, pk):
         parametro.delete()
         return redirect('parametro_list')
     return render(request, 'pages/parametro_confirm_delete.html', {'parametro': parametro})
-
-from .models import Formula
-from .forms import FormulaForm
 
 @login_required
 def formula_list(request, parametro_id):
