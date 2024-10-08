@@ -88,10 +88,10 @@ def proceso_list(request):
     procesos = procesos.filter(eventos__fecha__lte=fecha_actual).distinct()
 
     if form.is_valid():
-        if form.cleaned_data['nomenclatura']:
-            procesos = procesos.filter(nomenclatura__icontains=form.cleaned_data['nomenclatura'])
         if form.cleaned_data['nombre']:
             procesos = procesos.filter(nombre__icontains=form.cleaned_data['nombre'])
+        if form.cleaned_data['descripcion']:
+            procesos = procesos.filter(descripcion__icontains=form.cleaned_data['descripcion'])
         if form.cleaned_data['estimado'] and form.cleaned_data['estimado_condition']:
             if form.cleaned_data['estimado_condition'] == 'gt':
                 procesos = procesos.filter(estimado__gt=form.cleaned_data['estimado'])

@@ -14,6 +14,7 @@
                     <thead>
                         <tr>
                             <th>Nombre</th>
+                            <th>Descripción</th>
                             <th>Estimado</th>
                             <th>Estado</th>
                             <th class="text-right">Acciones</th>
@@ -27,6 +28,7 @@
                                     {{ proceso.nombre }}
                                 </a>
                             </td>
+                            <td>{{ proceso.descripcion|truncatechars:50 }}</td>
                             <td>{{ proceso.estimado|floatformat:2|intcomma }}</td>
                             <td>{{ proceso.estado }}</td>
                             <td class="text-right">
@@ -87,10 +89,10 @@
                 <div class="card-body">
                     <h4 class="card-title mb-3">Filtrar Procesos</h4>
                     <form method="get">
-                        {{ form.nomenclatura.label_tag }}
-                        {{ form.nomenclatura }}
                         {{ form.nombre.label_tag }}
                         {{ form.nombre }}
+                        {{ form.descripcion.label_tag }}
+                        {{ form.descripcion }}
                         {{ form.estimado.label_tag }}
                         {{ form.estimado }}
                         {{ form.estimado_condition.label_tag }}
@@ -98,6 +100,7 @@
                         {{ form.estado.label_tag }}
                         {{ form.estado }}
                         <button type="submit" class="btn btn-primary w-100 mt-3">Filtrar</button>
+                        <a href="{% url 'proceso_list' %}" class="btn btn-secondary w-100 mt-2">Limpiar Filtros</a>
                     </form>
                 </div>
             </div>

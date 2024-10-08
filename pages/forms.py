@@ -35,8 +35,8 @@ class CustomUserCreationForm(UserCreationForm):
         fields = ('username', 'email', 'password1', 'password2')
 
 class ProcesoFilterForm(forms.Form):
-    nomenclatura = forms.CharField(required=False)
     nombre = forms.CharField(required=False)
+    descripcion = forms.CharField(required=False)
     estimado = forms.DecimalField(required=False)
     estimado_condition = forms.ChoiceField(
         choices=[('gt', 'Mayor que'), ('lt', 'Menor que'), ('eq', 'Igual a')],
