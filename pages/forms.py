@@ -42,6 +42,17 @@ class ProcesoFilterForm(forms.Form):
         choices=[('gt', 'Mayor que'), ('lt', 'Menor que'), ('eq', 'Igual a')],
         required=False
     )
+    estado = forms.ChoiceField(required=False)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Obtener las opciones de estado desde la base de datos
+        estados = Formula.objects.filter(parametro_id=29, respon='2').values_list('nombre', 'nombre').distinct()
+        self.fields['estado'].choices = [('', 'Todos')] + list(estados)
+
+        # Añadir clases de Bootstrap a los campos
+        for field in self.fields:
+            self.fields[field].widget.attrs.update({'class': 'form-control mb-2'})
 
 class ParametroForm(forms.ModelForm):
     class Meta:

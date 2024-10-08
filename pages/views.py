@@ -53,14 +53,22 @@ def proceso_list(request):
     form = ProcesoFilterForm(request.GET)
     fecha_actual = timezone.now().date()
     
+    # Obtenemos los valores válidos de 'acti' de la tabla Formula
+    acti_validos = Formula.objects.filter(
+        parametro_id=29,
+        respon='2'
+    ).values_list('cantidad', flat=True)
+
     ultimo_evento = Evento.objects.filter(
         proceso=OuterRef('pk'),
-        fecha__lte=fecha_actual
+        fecha__lte=fecha_actual,
+        acti__in=acti_validos  # Filtramos los eventos con acti válidos
     ).order_by('-fecha', '-id')
 
     formula_estado = Formula.objects.filter(
         parametro_id=29,
-        cantidad=OuterRef('ultimo_evento_acti')
+        cantidad=OuterRef('ultimo_evento_acti'),
+        respon='2'
     ).values('nombre')[:1]
 
     procesos = Proceso.objects.annotate(
@@ -91,6 +99,8 @@ def proceso_list(request):
                 procesos = procesos.filter(estimado__lt=form.cleaned_data['estimado'])
             elif form.cleaned_data['estimado_condition'] == 'eq':
                 procesos = procesos.filter(estimado=form.cleaned_data['estimado'])
+        if form.cleaned_data['estado']:
+            procesos = procesos.filter(estado=form.cleaned_data['estado'])
 
     paginator = Paginator(procesos, 10)
     page_number = request.GET.get('page')
