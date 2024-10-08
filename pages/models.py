@@ -10,10 +10,23 @@ class Proceso(models.Model):
     cambio = models.DecimalField(max_digits=10, decimal_places=4, default=1.0000)
     estimado = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     expediente = models.IntegerField(null=True, blank=True)
-    periodo = models.IntegerField(default=10)
+    periodo = models.ForeignKey('Formula', on_delete=models.SET_NULL, null=True, related_name='procesos_periodo', limit_choices_to={'parametro_id': 11})
     convocatoria = models.IntegerField(default=1)
-    convocado = models.IntegerField(default=10)
+    convocado = models.ForeignKey('Formula', on_delete=models.SET_NULL, null=True, related_name='procesos_convocado', limit_choices_to={'parametro_id': 11})
     derivado = models.IntegerField(null=True, blank=True)
+
+    def save(self, *args, **kwargs):
+        if not self.periodo_id:
+            current_year = timezone.now().year
+            default_periodo = Formula.objects.filter(parametro_id=11, nombre=str(current_year)).first()
+            if default_periodo:
+                self.periodo = default_periodo
+        if not self.convocado_id:
+            current_year = timezone.now().year
+            default_convocado = Formula.objects.filter(parametro_id=11, nombre=str(current_year)).first()
+            if default_convocado:
+                self.convocado = default_convocado
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return self.nombre or ''
@@ -37,6 +50,22 @@ class Proceso(models.Model):
             if formula_orden:
                 return formula_orden.orden
         return 0
+
+    def get_periodo_nombre(self):
+        return self.periodo.nombre if self.periodo else ''
+
+    def get_convocado_nombre(self):
+        return self.convocado.nombre if self.convocado else ''
+
+    def get_periodo(self):
+        if self.periodo_id:
+            return Formula.objects.filter(parametro_id=11, orden=self.periodo_id).first()
+        return None
+
+    def get_convocado(self):
+        if self.convocado_id:
+            return Formula.objects.filter(parametro_id=11, orden=self.convocado_id).first()
+        return None
 
 class Evento(models.Model):
     proceso = models.ForeignKey(Proceso, on_delete=models.CASCADE, related_name='eventos')  # Relación con Proceso

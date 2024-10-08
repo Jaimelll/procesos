@@ -51,56 +51,37 @@ def home_view(request):
 @login_required
 def proceso_list(request):
     form = ProcesoFilterForm(request.GET)
-    fecha_actual = timezone.now().date()
-    
-    # Obtenemos los valores válidos de 'acti' de la tabla Formula
-    acti_validos = Formula.objects.filter(
-        parametro_id=29,
-        respon='2'
-    ).values_list('cantidad', flat=True)
-
-    ultimo_evento = Evento.objects.filter(
-        proceso=OuterRef('pk'),
-        fecha__lte=fecha_actual,
-        acti__in=acti_validos  # Filtramos los eventos con acti válidos
-    ).order_by('-fecha', '-id')
-
-    formula_estado = Formula.objects.filter(
-        parametro_id=29,
-        cantidad=OuterRef('ultimo_evento_acti'),
-        respon='2'
-    ).values('nombre')[:1]
-
-    procesos = Proceso.objects.annotate(
-        ultimo_evento_acti=Subquery(ultimo_evento.values('acti')[:1]),
-        estado=Subquery(formula_estado),
-        orden_estado=Coalesce(
-            Subquery(
-                Formula.objects.filter(
-                    parametro_id=12,
-                    cantidad=OuterRef('ultimo_evento_acti')
-                ).values('orden')[:1]
-            ),
-            Value(0, output_field=IntegerField())
-        )
-    )
-
-    procesos = procesos.filter(eventos__fecha__lte=fecha_actual).distinct()
+    procesos = Proceso.objects.all()
 
     if form.is_valid():
-        if form.cleaned_data['nombre']:
+        # Aplicar otros filtros
+        if form.cleaned_data.get('nombre'):
             procesos = procesos.filter(nombre__icontains=form.cleaned_data['nombre'])
-        if form.cleaned_data['descripcion']:
+        if form.cleaned_data.get('descripcion'):
             procesos = procesos.filter(descripcion__icontains=form.cleaned_data['descripcion'])
-        if form.cleaned_data['estimado'] and form.cleaned_data['estimado_condition']:
+        if form.cleaned_data.get('estimado') and form.cleaned_data.get('estimado_condition'):
             if form.cleaned_data['estimado_condition'] == 'gt':
                 procesos = procesos.filter(estimado__gt=form.cleaned_data['estimado'])
             elif form.cleaned_data['estimado_condition'] == 'lt':
                 procesos = procesos.filter(estimado__lt=form.cleaned_data['estimado'])
             elif form.cleaned_data['estimado_condition'] == 'eq':
                 procesos = procesos.filter(estimado=form.cleaned_data['estimado'])
-        if form.cleaned_data['estado']:
+        if form.cleaned_data.get('estado'):
             procesos = procesos.filter(estado=form.cleaned_data['estado'])
+
+        # Aplicar filtro de convoca
+        convoca = form.cleaned_data.get('convoca')
+        if convoca:
+            if convoca.orden == 20:
+                # Si el orden es 20, no aplicamos ningún filtro (se muestran todos los procesos)
+                pass
+            else:
+                procesos = procesos.filter(convocado=convoca.orden)
+        else:
+            # Aplicar filtro por defecto si no se ha seleccionado ningún valor
+            default_convoca = Formula.objects.filter(parametro_id=11, cantidad=2).first()
+            if default_convoca and default_convoca.orden != 20:
+                procesos = procesos.filter(convocado=default_convoca.orden)
 
     # Ordenación
     order_by = request.GET.get('order_by', 'nombre')
@@ -123,7 +104,14 @@ def proceso_list(request):
 @login_required
 def proceso_detail(request, pk):
     proceso = get_object_or_404(Proceso, pk=pk)
-    return render(request, 'pages/proceso_detail.html', {'proceso': proceso})
+    periodo = proceso.get_periodo()
+    convocado = proceso.get_convocado()
+    context = {
+        'proceso': proceso,
+        'periodo': periodo.nombre if periodo else "No especificado",
+        'convocado': convocado.nombre if convocado else "No especificado",
+    }
+    return render(request, 'pages/proceso_detail.html', context)
 
 @login_required
 def proceso_create(request):
@@ -146,7 +134,16 @@ def proceso_update(request, pk):
             return redirect('proceso_detail', pk=proceso.pk)
     else:
         form = ProcesoForm(instance=proceso)
-    return render(request, 'pages/proceso_form.html', {'form': form})
+    
+    # Asegurarse de que los campos periodo y convocado solo muestren opciones con parametro_id=11
+    form.fields['periodo'].queryset = Formula.objects.filter(parametro_id=11)
+    form.fields['convocado'].queryset = Formula.objects.filter(parametro_id=11)
+    
+    context = {
+        'form': form,
+        'proceso': proceso,
+    }
+    return render(request, 'pages/proceso_form.html', context)
 
 @login_required
 def proceso_delete(request, pk):

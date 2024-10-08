@@ -7,61 +7,27 @@
 
 {% block content %}
 <div class="container mt-5">
-    <h1 class="text-center mb-4">Detalles del Proceso</h1>
-    <table class="table table-bordered">
-        <tr>
-            <th>ID</th>
-            <td>{{ proceso.id }}</td>
-        </tr>
-        <tr>
-            <th>Nomenclatura</th>
-            <td>{{ proceso.nomenclatura }}</td>
-        </tr>
-        <tr>
-            <th>Nombre</th>
-            <td>{{ proceso.nombre }}</td>
-        </tr>
-        <tr>
-            <th>Descripción</th>
-            <td>{{ proceso.descripcion }}</td>
-        </tr>
-        <tr>
-            <th>Moneda</th>
-            <td>{{ proceso.moneda }}</td>
-        </tr>
-        <tr>
-            <th>Cambio</th>
-            <td>{{ proceso.cambio }}</td>
-        </tr>
-        <tr>
-            <th>Estimado</th>
-            <td>{{ proceso.estimado|floatformat:2|intcomma }}</td>
-        </tr>
-        <tr>
-            <th>Expediente</th>
-            <td>{{ proceso.expediente }}</td>
-        </tr>
-        <tr>
-            <th>Periodo</th>
-            <td>{{ proceso.periodo }}</td>
-        </tr>
-        <tr>
-            <th>Convocatoria</th>
-            <td>{{ proceso.convocatoria }}</td>
-        </tr>
-        <tr>
-            <th>Convocado</th>
-            <td>{{ proceso.convocado }}</td>
-        </tr>
-        <tr>
-            <th>Derivado</th>
-            <td>{{ proceso.derivado }}</td>
-        </tr>
-    </table>
-    <!-- Botones de acciones -->
-    <a href="{% url 'proceso_list' %}" class="btn btn-secondary mt-3">Volver a la lista de procesos</a>
-    <a href="{% url 'proceso_update' proceso.pk %}" class="btn btn-warning mt-3">Editar Proceso</a>
-    <!-- Botón para crear un nuevo proceso -->
-    <a href="{% url 'proceso_create' %}" class="btn btn-success mt-3">Crear Nuevo Proceso</a>
+    <h1>Detalles del Proceso</h1>
+    <dl class="row">
+        <dt class="col-sm-3">Nombre:</dt>
+        <dd class="col-sm-9">{{ proceso.nombre }}</dd>
+        
+        <dt class="col-sm-3">Descripción:</dt>
+        <dd class="col-sm-9">{{ proceso.descripcion }}</dd>
+        
+        <dt class="col-sm-3">Estimado:</dt>
+        <dd class="col-sm-9">{{ proceso.estimado|floatformat:2|intcomma }}</dd>
+        
+        <dt class="col-sm-3">Estado:</dt>
+        <dd class="col-sm-9">{{ proceso.estado }}</dd>
+        
+        <dt class="col-sm-3">Periodo:</dt>
+        <dd class="col-sm-9">{{ periodo }}</dd>
+        
+        <dt class="col-sm-3">Convocado:</dt>
+        <dd class="col-sm-9">{{ convocado }}</dd>
+    </dl>
+    <a href="{% url 'proceso_update' proceso.pk %}" class="btn btn-primary">Editar</a>
+    <a href="{% url 'proceso_list' %}" class="btn btn-secondary">Volver a la lista</a>
 </div>
 {% endblock %}
