@@ -56,22 +56,14 @@ class ProcesoFilterForm(forms.Form):
     nombre = forms.CharField(required=False)
     descripcion = forms.CharField(required=False)
     estimado = forms.DecimalField(required=False)
-    estimado_condition = forms.ChoiceField(
-        choices=[('gt', 'Mayor que'), ('lt', 'Menor que'), ('eq', 'Igual a')],
-        required=False
-    )
-    estado = forms.ChoiceField(required=False)
-    convoca = forms.ModelChoiceField(
-        queryset=Formula.objects.filter(parametro_id=11),
-        empty_label="Todos",
-        required=False,
-        label="Convoca",
-    )
+    estimado_condition = forms.ChoiceField(choices=[('gt', 'Mayor que'), ('lt', 'Menor que'), ('eq', 'Igual a')], required=False)
+    estado = forms.ChoiceField(required=False)  # Descomentamos esta línea
+    convoca = forms.ModelChoiceField(queryset=Formula.objects.filter(parametro_id=11), required=False)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         # Obtener las opciones de estado desde la base de datos
-        estados = Formula.objects.filter(parametro_id=29, respon='2').values_list('nombre', 'nombre').distinct()
+        estados = Formula.objects.filter(parametro_id=29).values_list('nombre', 'nombre').distinct()
         self.fields['estado'].choices = [('', 'Todos')] + list(estados)
 
         # Establecer el valor por defecto para el campo 'convoca'
@@ -100,4 +92,3 @@ class FormulaForm(forms.ModelForm):
     class Meta:
         model = Formula
         fields = ['nombre', 'descripcion', 'orden', 'obs', 'cantidad', 'numero', 'acti', 'respon', 'respon2']
-

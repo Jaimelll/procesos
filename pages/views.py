@@ -5,7 +5,7 @@ from .models import Proceso, Evento, Parametro, Formula
 from .forms import ProcesoForm, CustomUserCreationForm, ProcesoFilterForm, EventoForm, ParametroForm, ParametroFilterForm, FormulaForm
 from django.urls import reverse_lazy
 from django.views.generic import CreateView
-from django.db.models import Count, Sum, F, Value, IntegerField, OuterRef, Subquery
+from django.db.models import Count, Sum, F, Value, IntegerField, OuterRef, Subquery, Exists, CharField, Q
 from django.db.models.functions import Coalesce
 from django.core.paginator import Paginator
 from django.utils import timezone
@@ -50,11 +50,45 @@ def home_view(request):
 
 @login_required
 def proceso_list(request):
+    print("Iniciando proceso_list")
+    
+    print("Número total de Procesos:", Proceso.objects.count())
+    print("Número total de Eventos:", Evento.objects.count())
+    print("Número de Fórmulas con parametro_id=29:", Formula.objects.filter(parametro_id=29).count())
+    
     form = ProcesoFilterForm(request.GET)
     procesos = Proceso.objects.all()
+    default_convoca = None
+
+    # Obtener los valores válidos de 'cantidad' para el parámetro_id=29
+    valores_validos = Formula.objects.filter(parametro_id=29).values_list('cantidad', flat=True)
+
+    # Subquery para obtener el último evento de cada proceso con acti válido
+    ultimo_evento = Evento.objects.filter(
+        proceso=OuterRef('pk'),
+        acti__in=valores_validos
+    ).order_by('-fecha', '-id').values('acti')[:1]
+
+    # Anotar cada proceso con su estado
+    procesos = procesos.annotate(
+        ultimo_acti=Subquery(ultimo_evento),
+        estado=Coalesce(
+            Subquery(
+                Formula.objects.filter(
+                    parametro_id=29,
+                    cantidad=OuterRef('ultimo_acti')
+                ).values('nombre')[:1]
+            ),
+            Value('Sin estado'),
+            output_field=CharField()
+        )
+    )
+
+    # Obtener los estados válidos para el filtro
+    estados_validos = Formula.objects.filter(parametro_id=29).values_list('nombre', 'nombre').distinct()
 
     if form.is_valid():
-        # Aplicar otros filtros
+        # Aplicar filtros
         if form.cleaned_data.get('nombre'):
             procesos = procesos.filter(nombre__icontains=form.cleaned_data['nombre'])
         if form.cleaned_data.get('descripcion'):
@@ -66,8 +100,11 @@ def proceso_list(request):
                 procesos = procesos.filter(estimado__lt=form.cleaned_data['estimado'])
             elif form.cleaned_data['estimado_condition'] == 'eq':
                 procesos = procesos.filter(estimado=form.cleaned_data['estimado'])
+        
         if form.cleaned_data.get('estado'):
             procesos = procesos.filter(estado=form.cleaned_data['estado'])
+            print(f"Filtrando por estado: {form.cleaned_data['estado']}")
+            print(f"Procesos después del filtro: {procesos.count()}")
 
         # Aplicar filtro de convoca
         convoca = form.cleaned_data.get('convoca')
@@ -77,6 +114,7 @@ def proceso_list(request):
                 pass
             else:
                 procesos = procesos.filter(convocado=convoca.orden)
+                default_convoca = convoca
         else:
             # Aplicar filtro por defecto si no se ha seleccionado ningún valor
             default_convoca = Formula.objects.filter(parametro_id=11, cantidad=2).first()
@@ -90,14 +128,36 @@ def proceso_list(request):
     else:
         procesos = procesos.order_by(F(order_by).asc(nulls_last=True))
 
+    # Imprimir información detallada de los procesos
+    for proceso in procesos[:20]:  # Limitamos a 20 para no sobrecargar los logs
+        print(f"Proceso: {proceso.id}, Último acti: {proceso.ultimo_acti}, Estado: {proceso.estado}")
+        ultimo_evento = Evento.objects.filter(proceso=proceso).order_by('-fecha', '-id').first()
+        if ultimo_evento:
+            print(f"  Último evento: fecha={ultimo_evento.fecha}, acti={ultimo_evento.acti}")
+            formula = Formula.objects.filter(parametro_id=29, cantidad=ultimo_evento.acti).first()
+            if formula:
+                print(f"  Fórmula correspondiente: {formula.nombre}")
+            else:
+                print(f"  No se encontró fórmula para acti={ultimo_evento.acti}")
+        else:
+            print("  No se encontraron eventos para este proceso")
+
     paginator = Paginator(procesos, 10)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
+
+    # Imprimir los estados de los procesos
+    for proceso in page_obj:
+        print(f"Proceso: {proceso.id}, Último acti: {proceso.ultimo_acti}, Estado: {proceso.estado}")
+
+    print("Finalizando proceso_list")
 
     context = {
         'page_obj': page_obj,
         'form': form,
         'order_by': order_by,
+        'default_convoca': default_convoca,
+        'estados_validos': estados_validos,  # Agregar esto al contexto
     }
     return render(request, 'pages/proceso_list.html', context)
 

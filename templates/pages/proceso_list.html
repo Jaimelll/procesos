@@ -63,7 +63,7 @@
                             </td>
                             <td>{{ proceso.descripcion|truncatechars:50 }}</td>
                             <td>{{ proceso.estimado|floatformat:2|intcomma }}</td>
-                            <td>{{ proceso.estado }}</td>
+                            <td>{{ proceso.estado|default:"Sin estado" }}</td>
                             <td class="text-right">
                                 <div class="btn-group" role="group">
                                     <a href="{% url 'proceso_detail' proceso.pk %}" class="btn btn-info btn-sm">Ver</a>
@@ -131,9 +131,25 @@
                         {{ form.estimado_condition.label_tag }}
                         {{ form.estimado_condition }}
                         {{ form.estado.label_tag }}
-                        {{ form.estado }}
+                        <select name="{{ form.estado.name }}" class="form-control mb-2">
+                            <option value="">Todos</option>
+                            {% for value, label in estados_validos %}
+                                <option value="{{ value }}" {% if value == form.estado.value %}selected{% endif %}>{{ label }}</option>
+                            {% endfor %}
+                        </select>
                         {{ form.convoca.label_tag }}
-                        {{ form.convoca }}
+                        {% if default_convoca and not form.convoca.value %}
+                            <select name="{{ form.convoca.name }}" class="form-control mb-2">
+                                <option value="{{ default_convoca.orden }}" selected>{{ default_convoca.nombre }} (Orden: {{ default_convoca.orden }})</option>
+                                {% for option in form.convoca.field.queryset %}
+                                    {% if option.orden != default_convoca.orden %}
+                                        <option value="{{ option.orden }}">{{ option.nombre }} (Orden: {{ option.orden }})</option>
+                                    {% endif %}
+                                {% endfor %}
+                            </select>
+                        {% else %}
+                            {{ form.convoca }}
+                        {% endif %}
                         <button type="submit" class="btn btn-primary w-100 mt-3">Filtrar</button>
                         <a href="{% url 'proceso_list' %}" class="btn btn-secondary w-100 mt-2">Limpiar Filtros</a>
                     </form>
