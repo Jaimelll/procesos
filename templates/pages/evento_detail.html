@@ -1,5 +1,6 @@
 <!-- templates/pages/evento_detail.html -->
 {% extends 'base.html' %}
+{% load humanize %}
 
 {% block title %}
     Detalle del Evento
@@ -11,9 +12,9 @@
         <!-- Sidebar con información del Proceso -->
         <div class="col-md-4">
             <h4>Detalles del Proceso</h4>
-            <p><strong>Número:</strong> {{ proceso.numero }}</p>
             <p><strong>Nombre:</strong> {{ proceso.nombre }}</p>
             <p><strong>Descripción:</strong> {{ proceso.descripcion }}</p>
+            <p><strong>Estimado:</strong> {{ proceso.estimado|floatformat:2|intcomma }}</p>
         </div>
 
         <!-- Detalle del Evento -->

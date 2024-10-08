@@ -1,5 +1,6 @@
 <!-- templates/pages/evento_list.html -->
 {% extends 'base.html' %}
+{% load humanize %}
 
 {% block title %}
     Lista de Eventos
@@ -7,23 +8,25 @@
 
 {% block content %}
 <div class="container mt-4">
-    <h2>Lista de Eventos para el Proceso: {{ proceso.nombre }}</h2>
+    <h5>{{ proceso.nombre }} - {{ proceso.descripcion }} - S/ {{ proceso.estimado|floatformat:2|intcomma }}</h5>
     <a href="{% url 'evento_create' proceso.id %}" class="btn btn-primary mb-3">Agregar Evento</a>
     <table class="table table-striped">
         <thead>
             <tr>
-                <th>Actividad (Fórmula)</th>
-                <th>Actividad</th>
                 <th>Fecha</th>
+                <th>Actividad (Fórmula)</th>
+                <th>Documento</th>
+                <th>Situación</th>
                 <th>Acciones</th>
             </tr>
         </thead>
         <tbody>
             {% for evento in eventos %}
             <tr>
+                <td>{{ evento.fecha|date:"d/m/Y" }}</td>
                 <td>{{ evento.acti_nombre }}</td>
-                <td>{{ evento.actividad }}</td>
-                <td>{{ evento.fecha }}</td>
+                <td>{{ evento.documento }}</td>
+                <td>{{ evento.situacion }}</td>
                 <td>
                     <a href="{% url 'evento_detail' proceso.id evento.id %}" class="btn btn-info btn-sm">Ver</a>
                     <a href="{% url 'evento_update' proceso.id evento.id %}" class="btn btn-warning btn-sm">Editar</a>
