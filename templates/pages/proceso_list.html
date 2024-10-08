@@ -13,10 +13,43 @@
                 <table class="table table-striped">
                     <thead>
                         <tr>
-                            <th>Nombre</th>
+                            <th>
+                                <a href="?order_by={% if order_by == 'nombre' %}-{% endif %}nombre{% for key, value in request.GET.items %}{% if key != 'order_by' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                                    Nombre
+                                    {% if order_by == 'nombre' %}
+                                        <i class="fas fa-sort-up"></i>
+                                    {% elif order_by == '-nombre' %}
+                                        <i class="fas fa-sort-down"></i>
+                                    {% else %}
+                                        <i class="fas fa-sort"></i>
+                                    {% endif %}
+                                </a>
+                            </th>
                             <th>Descripción</th>
-                            <th>Estimado</th>
-                            <th>Estado</th>
+                            <th>
+                                <a href="?order_by={% if order_by == 'estimado' %}-{% endif %}estimado{% for key, value in request.GET.items %}{% if key != 'order_by' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                                    Estimado
+                                    {% if order_by == 'estimado' %}
+                                        <i class="fas fa-sort-up"></i>
+                                    {% elif order_by == '-estimado' %}
+                                        <i class="fas fa-sort-down"></i>
+                                    {% else %}
+                                        <i class="fas fa-sort"></i>
+                                    {% endif %}
+                                </a>
+                            </th>
+                            <th>
+                                <a href="?order_by={% if order_by == 'estado' %}-{% endif %}estado{% for key, value in request.GET.items %}{% if key != 'order_by' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                                    Estado
+                                    {% if order_by == 'estado' %}
+                                        <i class="fas fa-sort-up"></i>
+                                    {% elif order_by == '-estado' %}
+                                        <i class="fas fa-sort-down"></i>
+                                    {% else %}
+                                        <i class="fas fa-sort"></i>
+                                    {% endif %}
+                                </a>
+                            </th>
                             <th class="text-right">Acciones</th>
                         </tr>
                     </thead>

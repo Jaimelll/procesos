@@ -13,7 +13,18 @@
     <table class="table table-striped">
         <thead>
             <tr>
-                <th>Fecha</th>
+                <th>
+                    <a href="?order_by={% if order_by == 'fecha' %}-{% endif %}fecha">
+                        Fecha
+                        {% if order_by == 'fecha' %}
+                            <i class="fas fa-sort-up"></i>
+                        {% elif order_by == '-fecha' %}
+                            <i class="fas fa-sort-down"></i>
+                        {% else %}
+                            <i class="fas fa-sort"></i>
+                        {% endif %}
+                    </a>
+                </th>
                 <th>Actividad (Fórmula)</th>
                 <th>Documento</th>
                 <th>Situación</th>

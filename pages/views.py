@@ -102,6 +102,13 @@ def proceso_list(request):
         if form.cleaned_data['estado']:
             procesos = procesos.filter(estado=form.cleaned_data['estado'])
 
+    # Ordenación
+    order_by = request.GET.get('order_by', 'nombre')
+    if order_by.startswith('-'):
+        procesos = procesos.order_by(F(order_by[1:]).desc(nulls_last=True))
+    else:
+        procesos = procesos.order_by(F(order_by).asc(nulls_last=True))
+
     paginator = Paginator(procesos, 10)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
@@ -109,6 +116,7 @@ def proceso_list(request):
     context = {
         'page_obj': page_obj,
         'form': form,
+        'order_by': order_by,
     }
     return render(request, 'pages/proceso_list.html', context)
 
@@ -157,7 +165,10 @@ class SignUpView(CreateView):
 @login_required
 def evento_list(request, proceso_id):
     proceso = get_object_or_404(Proceso, pk=proceso_id)
-    eventos = proceso.eventos.all()
+    order_by = request.GET.get('order_by', 'fecha')  # Default a ordenar por fecha ascendente
+    
+    eventos = proceso.eventos.all().order_by(order_by)
+    
     formulas = Formula.objects.filter(parametro_id=12).order_by('orden')
     
     for evento in eventos:
@@ -167,6 +178,7 @@ def evento_list(request, proceso_id):
     context = {
         'proceso': proceso,
         'eventos': eventos,
+        'order_by': order_by,
     }
     return render(request, 'pages/evento_list.html', context)
 
