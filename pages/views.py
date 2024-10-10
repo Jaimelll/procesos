@@ -18,35 +18,47 @@ def home_view(request):
     mercado_seleccionado = request.GET.get('mercado', 'Nacional')
     
     procesos = Proceso.objects.all()
-    eventos = Evento.objects.filter(proceso__in=procesos).order_by('fecha')
 
     if mercado_seleccionado == 'Extranjero':
         procesos = procesos.filter(nombre__startswith='RE')
     else:
         procesos = procesos.exclude(nombre__startswith='RE')
 
+    # Ordenar los procesos por el campo 'nombre'
+    procesos = procesos.order_by('nombre')
+
+    eventos = Evento.objects.filter(proceso__in=procesos).order_by('fecha')
+
     # Obtener las actividades (suponiendo que están relacionadas con los eventos)
     activities = eventos.values_list('acti', flat=True).distinct()
+
+    # Paginación
+    paginator = Paginator(procesos, 15)  # 15 procesos por página
+    page_number = request.GET.get('page')  # Obtener número de página desde los parámetros de la URL
+    page_obj = paginator.get_page(page_number)  # Obtener los procesos para la página actual
 
     # Definir una longitud máxima para las etiquetas (ajusta según tus necesidades)
     max_label_length = 20
 
-    graphic = generate_graphic(procesos, eventos, mercado_seleccionado, activities, max_label_length)
+    # Generar el gráfico solo con los procesos de la página actual
+    graphic = generate_graphic(page_obj, eventos, mercado_seleccionado, activities, max_label_length)
+    
+    # Procesos por nombre para el gráfico de pastel
     procesos_por_nombre = Proceso.objects.values('nombre').annotate(
         total_procesos=Count('id'),
         total_estimado=Sum('estimado')
     )
-    print(f"Procesos por nombre: {list(procesos_por_nombre)}")  # Agregar esta línea para depuración
     graphic2 = generate_pie_chart(procesos_por_nombre)
 
     context = {
         'graphic': graphic,
         'graphic2': graphic2,
-        'procesos': procesos,
+        'procesos': page_obj,  # Enviar el objeto de paginación al template
         'mercados': mercados,
         'mercado_seleccionado': mercado_seleccionado,
     }
     return render(request, 'home.html', context)
+
 
 @login_required
 def proceso_list(request):
